@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const responseText = await getApiResponse(systemPrompt);
-            
+
             // 3. 解析AI返回的JSON数据
             const sanitizedText = responseText.replace(/^```json\s*|```$/g, "").trim();
             const parsedData = JSON.parse(sanitizedText);
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const role2IdentitySelect = document.getElementById('studio-role2-identity-select');
         const role1IdentityValue = role1IdentitySelect.value;
         const role2IdentityValue = role2IdentitySelect.value;
-        
+
         // 从<option>的data属性获取人设
         const role1Persona = unescape(role1IdentitySelect.options[role1IdentitySelect.selectedIndex].dataset.persona);
         const role2Persona = unescape(role2IdentitySelect.options[role2IdentitySelect.selectedIndex].dataset.persona);
@@ -329,13 +329,13 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('两个角色的身份不能是同一个人！');
             return;
         }
-        
+
         const userRoleNumber = role1Player === 'user' ? 1 : 2;
         const aiRoleNumber = role1Player === 'ai' ? 1 : 2;
 
         const aiIdentityValue = aiRoleNumber === 1 ? role1IdentityValue : role2IdentityValue;
         const aiChatId = aiIdentityValue !== 'user' ? aiIdentityValue : (userRoleNumber === 1 ? role2IdentityValue : role1IdentityValue);
-        
+
         // 如果AI扮演的角色选择了“user”身份，这是无效的
         // if (aiIdentityValue === 'user') {
         //     alert('AI不能扮演“你”的身份，请为AI扮演的角色选择一个AI身份。');
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userPersona: userRoleNumber === 1 ? script.character1_identity : script.character2_identity,
             history: [],
         };
-        
+
         // 1. 如果有开场白，先把它作为第一条消息
         if (script.openingRemark) {
             const openingMessage = {
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 将用户扮演的角色任务附加在后面
         // const userInitialIdentity = userRoleNumber === 1 ? script.character1_identity : script.character2_identity;
         // initialContent += `\n\n【你的任务】\n${userInitialIdentity}`;
-        
+
         // const initialMessage = {
         //     role: 'system',
         //     content: initialContent
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
         roleSelectionModal.classList.remove('visible');
         renderStudioPlayScreen();
         showScreen('studio-play-screen');
-        
+
         // 如果是AI先行动，触发AI
         // 可以在这里添加逻辑，例如判断剧本设定谁先开始
     }
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function createPlayMessageElement(msg) {
         const wrapper = document.createElement("div");
-        
+
         // ★★★ 核心修复：在这里判断角色并使用正确的class名 ★★★
         const roleClass = msg.role === 'assistant' ? 'ai' : msg.role;
 
@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeStudioPlay.history.pop();
         } else {
             // 如果AI回复后，旁白生成失败，这里可能只有AI的回复
-            if(lastMsg && lastMsg.role === 'assistant') {
+            if (lastMsg && lastMsg.role === 'assistant') {
                 activeStudioPlay.history.pop();
             }
         }
@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function triggerAiStudioResponse() {
         const { script, aiRole, aiChatId, history, aiIdentity, userPersona } = activeStudioPlay;
         const chat = window.state.chats[aiChatId];
-        
+
         // 1. 显示“角色正在行动”的提示
         const actionTypingIndicator = createTypingIndicator(`${chat.name} 正在行动...`);
         playMessagesEl.appendChild(actionTypingIndicator);
@@ -521,18 +521,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     # 你的双重身份 (重要！)
     1.  **你的核心性格 (Base Personality):** ${chat.settings.aiPersona} 
-        *这是你的本质，你的行为和说话方式的根源。*
+        *其中性格部分是你的本质，你的行为和说话方式的根源，与身份背景或世界观有关的信息在演绎时需要被忽略。*
     2.  **你在此剧中的身份和任务 (Your Role in this Play):** ${aiIdentity}
-        *这是你当前需要扮演的角色，你的行动目标必须围绕它展开。*
+        *这是你当前需要扮演的角色，你的行动目标和一切描写必须围绕它展开。*
     
     # 对方的身份
     对方在此剧中的身份：${userPersona}
 
     # 规则
-    1.  【【【表演核心】】】你必须将你的“核心性格”与“剧本身份”深度结合进行演绎。例如，如果你的核心性格是傲娇，但剧本身份是个侦探，那你就是一个傲娇的侦探。
+    1.  【【【表演核心】】】你必须将你的“核心性格”与“剧本身份”深度结合进行演绎。例如，如果你的核心性格是傲娇，但剧本身份是个古代侦探，那你就是一个【古代的】傲娇的侦探。
     2.  你的所有行动和对话都必须以第一人称进行。
-    3.  你的回复应该是描述性的，包含动作、对话和心理活动，用【】包裹非对话内容。
-    4.  绝对不要提及你是AI或模型。
+    3.  你的回复应该是描述性的，包含动作、对话和心理活动，用【】包裹非对话内容。一切描写务必符合【剧本身份】和【故事背景】所在的世界观，例如古代世界观不允许出现任何现代物品，与你的“核心性格”无关。
+    4.  绝对不要提及你是AI或模型，也不要提起自己是在“角色扮演”，一切身份信息务必以【剧本身份】为准。
 
     # 故事目标 (你的行动应围绕此目标展开)
     ${script.storyGoal}
@@ -549,8 +549,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const { proxyUrl, apiKey, model } = window.state.apiConfig;
             const isGemini = proxyUrl === "https://generativelanguage.googleapis.com/v1beta/models";
-            
-            const requestData = isGemini 
+
+            const requestData = isGemini
                 ? window.toGeminiRequestData(model, apiKey, systemPrompt, messagesForApi, true)
                 : {
                     url: `${proxyUrl}/v1/chat/completions`,
@@ -560,13 +560,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({ model, messages: [{ role: "system", content: systemPrompt }, ...messagesForApi] })
                     }
                 };
-            
+
             const response = await fetch(requestData.url, requestData.data);
             if (!response.ok) throw new Error(`API错误: ${await response.text()}`);
-            
+
             const result = await response.json();
             const aiContent = isGemini ? result.candidates[0].content.parts[0].text : result.choices[0].message.content;
-            
+
             const aiMessage = { role: 'assistant', content: aiContent };
             activeStudioPlay.history.push(aiMessage);
             playMessagesEl.appendChild(createPlayMessageElement(aiMessage));
@@ -955,19 +955,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const finalNarration = { role: 'system', content: `【结局】\n${parsedResponse.narration}` };
                     activeStudioPlay.history.push(finalNarration);
                     playMessagesEl.appendChild(createPlayMessageElement(finalNarration));
-                    
+
                     // 延迟一小会儿，然后弹出成功结算窗口
                     setTimeout(() => {
                         endStudioPlay(true);
                     }, 1500);
-                    
+
                     return; // 结束函数，不再执行后续逻辑
                 }
             } catch (e) {
                 // 解析失败，说明AI返回的是普通的旁白文本，不是JSON结束信号
                 // 我们什么都不做，让程序继续往下走
             }
-            
+
             // 如果程序能走到这里，说明结局未达成，正常处理旁白
             if (responseText) {
                 const narrationMessage = { role: 'system', content: `【旁白】\n${responseText}` };

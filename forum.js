@@ -778,11 +778,11 @@ ${worldviewContext}
 		// const char1Persona = (state.chats[char1Data.id]?.settings.aiPersona || '一个普通人');
 		// const char2Persona = (state.chats[char2Data.id]?.settings.aiPersona || '一个普通人');
 
-		let worldviewContext = worldviewPreference ? `世界观设定：${worldviewPreference}` : "";
+		let worldviewContext = worldviewPreference ? `世界观设定及创作要求：${worldviewPreference}` : "";
 
 		// --- ▼▼▼ 【核心修正】重写Prompt，增强稳定性和清晰度 ---
 		const prompt = `
-你是一位专业的同人文写手。请根据以下要求，创作【三篇】关于角色A和角色B的、情节各不相同的短篇同人故事。
+你是一位专业的同人文写手。请根据以下要求，创作【三篇】关于角色A和角色B的同人故事。
 
 # 角色信息
 - 角色A (${char1Name}): ${char1Persona}
@@ -790,7 +790,7 @@ ${worldviewContext}
 ${worldviewContext}
 
 # 任务要求
-1.  **创作三篇故事**: 三篇故事的情节、风格必须完全不同。
+1.  **创作三篇故事**: 【每篇】故事的字数不能少于5000字。
 2.  **原创分类**: 为【每篇】故事，根据其情节原创1-2个最贴切的分类标签 (例如: "破镜重圆", "ABO", "甜文")。
 3.  **生成评论**: 为【每篇】故事，模拟读者口吻生成3-5条评论。
 4.  **JSON格式**: 你的回复【必须且只能】是一个纯净的JSON数组，直接以 '[' 开头，以 ']' 结尾。禁止包含任何其他说明文字。
