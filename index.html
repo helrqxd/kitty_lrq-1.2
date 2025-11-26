@@ -26197,7 +26197,7 @@
                             请在返回的 JSON "chats" 数组中，严格按照上述指定的 "contactName" 生成对应的聊天记录。
                         `;
 						// 3. 修改 JSON 结构提示，引导AI生成正确的数量
-						finalDataTypeInfo.jsonStructure = `"chats": [\n` + specificTargets.map((t) => `    { "contactName": "${t.name}", "messages": [ ... ] }`).join(",\n") + `\n  ]`;
+						finalDataTypeInfo.jsonStructure = `"chats": [\n` + specificTargets.map((t) => `    { "contactName": "${t.name}", "messages": [\n        {"sender": "${t.name}", "content": "消息内容1..."},\n        {"sender": "${chat.name}", "content": "你的回复1..."}\n] }`).join(",\n") + `\n  ]`;
 					}
 
 					if (dataType === "bank") {
@@ -26294,42 +26294,42 @@
 
 						// 使用修改后的 finalDataTypeInfo 来构建Prompt
 						const prompt = `
-			# 任务
-			你现在是角色 "${chat.name}"。请根据你的信息和最近的聊天记录，【只生成一项】你手机中的新数据。
-			具体任务是：生成${finalDataTypeInfo.description}
+                            # 任务
+                            你现在是角色 "${chat.name}"。请根据你的信息和最近的聊天记录，【只生成一项】你手机中的新数据。
+                            具体任务是：生成${finalDataTypeInfo.description}
 
-			# 【【【情景一致性铁律】】】
-			你生成的所有数据（尤其是"trajectory"行动轨迹）**必须**与“最近聊天记录摘要”中提到的最新情景保持绝对一致。
-			当生成 "bank" 数据时，你的交易记录【绝对不能】包含与用户("${userNickname}")的转账或收款。所有交易都应是你与其他NPC或商家的。
-			# 【【【绝对禁止事项】】】
-			在生成 "chats" 数据时，**绝对不允许**让用户（${userNickname}）出现在你与其他NPC的对话中。
+                            # 【【【情景一致性铁律】】】
+                            你生成的所有数据（尤其是"trajectory"行动轨迹）**必须**与“最近聊天记录摘要”中提到的最新情景保持绝对一致。
+                            当生成 "bank" 数据时，你的交易记录【绝对不能】包含与用户("${userNickname}")的转账或收款。所有交易都应是你与其他NPC或商家的。
+                            # 【【【绝对禁止事项】】】
+                            在生成 "chats" 数据时，**绝对不允许**让用户（${userNickname}）出现在你与其他NPC的对话中。
 
-			// ▼▼▼ 找到这部分代码 ▼▼▼
+                            // ▼▼▼ 找到这部分代码 ▼▼▼
 
-			# 【【【重要指令：关于聊天记录生成】】】
-			- 你正在创作一段对话。提供的聊天记录是上下文，你【绝对不能】重复或改写其中的任何内容。你的生成必须从【全新的、下一条】消息开始。
-			- 如果指定了对话对象，你【必须】为列表中的【每一个NPC】都生成一段与你（${chat.name}）的对话。
-			- 如果列表为空，你可以虚构2-3个普通朋友并生成对话。
-			- 你必须为每个联系人生成一段【至少包含5条消息】的对话。
-			- 对话内容应该自然流畅，可以包含连续发言、表情包和表情符号等，以体现真实感。
-			- 不要只生成一问一答的机械式对话。
-			-   **【【【绝对禁止重复铁律】】】**: 你生成的 "messages" 数组中，【绝对不能】包含我提供给你的上下文里的任何一条消息。你的第一条消息必须是对话历史中最后一条消息的【下一条】。
-			# 你的信息
-			- 你的名字: ${chat.name}
-			- 你的人设: ${persona}
-			${worldBookContext}
-			# 和${userNickname}的最近聊天记录摘要
-			${recentHistory}
-			${linkedMemoryContext}
-			${npcContext}
-			${npcChatHistoryContext}
+                            # 【【【重要指令：关于聊天记录生成】】】
+                            - 你正在创作一段对话。提供的聊天记录是上下文，你【绝对不能】重复或改写其中的任何内容。你的生成必须从【全新的、下一条】消息开始。
+                            - 如果指定了对话对象，你【必须】为列表中的【每一个NPC】都生成一段与你（${chat.name}）的对话。
+                            - 如果列表为空，你可以虚构2-3个普通朋友并生成对话。
+                            - 你必须为每个联系人生成一段【至少包含5条消息】的对话。
+                            - 对话内容应该自然流畅，可以包含连续发言、表情包和表情符号等，以体现真实感。
+                            - 不要只生成一问一答的机械式对话。
+                            -   **【【【绝对禁止重复铁律】】】**: 你生成的 "messages" 数组中，【绝对不能】包含我提供给你的上下文里的任何一条消息。你的第一条消息必须是对话历史中最后一条消息的【下一条】。
+                            # 你的信息
+                            - 你的名字: ${chat.name}
+                            - 你的人设: ${persona}
+                            ${worldBookContext}
+                            # 和${userNickname}的最近聊天记录摘要
+                            ${recentHistory}
+                            ${linkedMemoryContext}
+                            ${npcContext}
+                            ${npcChatHistoryContext}
 
-			# JSON输出格式 (必须严格遵守，只包含你被要求的那个键)
-			{
-			  ${finalDataTypeInfo.jsonStructure}
-			}
-			`;
-
+                            # JSON输出格式 (必须严格遵守，只包含你被要求的那个键)
+                            {
+                            ${finalDataTypeInfo.jsonStructure}
+                            }
+                            `;
+						console.log("prompt:", prompt);
 						const { proxyUrl, apiKey, model } = state.apiConfig;
 						let isGemini = proxyUrl === GEMINI_API_URL;
 						let geminiConfig = toGeminiRequestData(model, apiKey, prompt, [{ role: "user", content: prompt }], isGemini);
