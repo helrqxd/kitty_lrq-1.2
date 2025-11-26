@@ -9831,45 +9831,45 @@
 										replyHtml = `<span class="reply-text">回复</span> <span class="reply-target-name">${comment.replyTo}</span>`;
 									}
 									commentsHtml += `
-			                        <div class="comment-item" data-commenter-name="${comment.commenterName}">
-			                            <span class="commenter-name">${comment.commenterName}</span>${replyHtml}:
-			                            <span class="comment-text"> ${comment.text}</span>
-			                            <span class="comment-delete-btn" data-comment-index="${originalIndex}">×</span>
-			                        </div>`;
+                                        <div class="comment-item" data-commenter-name="${comment.commenterName}">
+                                            <span class="commenter-name">${comment.commenterName}</span>${replyHtml}:
+                                            <span class="comment-text"> ${comment.text}</span>
+                                            <span class="comment-delete-btn" data-comment-index="${originalIndex}">×</span>
+                                        </div>`;
 								});
 								commentsHtml += "</div>";
 							}
 						}
 
 						const commentsAndFooterHtml = `
-			            ${commentsHtml}
-			            <div class="post-footer">
-			                <div class="comment-section">
-			                    <img src="${commentAvatar}" class="comment-avatar">
-			                    <input type="text" class="comment-input" placeholder="友善的评论是交流的起点">
-			                    <div class="at-mention-popup"></div>
-			                </div>
-			                <button class="comment-send-btn">发送</button>
-			            </div>
-			        `;
+                            ${commentsHtml}
+                            <div class="post-footer">
+                                <div class="comment-section">
+                                    <img src="${commentAvatar}" class="comment-avatar">
+                                    <input type="text" class="comment-input" placeholder="友善的评论是交流的起点">
+                                    <div class="at-mention-popup"></div>
+                                </div>
+                                <button class="comment-send-btn">发送</button>
+                            </div>
+                        `;
 
 						const userNickname = state.qzoneSettings.nickname;
 						const isLikedByUser = post.likes && post.likes.includes(userNickname);
 						const isFavoritedByUser = favoritedPostIds.has(post.id);
 
 						postEl.innerHTML = `
-			            <div class="post-header"><img src="${authorAvatar}" class="post-avatar"><div class="post-info"><span class="post-nickname">${authorNickname}</span><span class="post-timestamp">${formatPostTimestamp(post.timestamp)}</span></div>
-			                <div class="post-actions-btn">…</div>
-			            </div>
-			            <div class="post-main-content">${contentHtml}</div>
-			            <div class="post-feedback-icons">
-			                <span class="action-icon like ${isLikedByUser ? "active" : ""}"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span>
-			                <span class="action-icon favorite ${isFavoritedByUser ? "active" : ""}"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></span>
-			                <span class="action-icon summon-npc" data-post-id="${post.id}" data-author-id="${post.authorId}" title="召唤NPC评论"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-			                </div>
-			            ${likesHtml}
-			            ${commentsAndFooterHtml}
-			        `;
+                            <div class="post-header"><img src="${authorAvatar}" class="post-avatar"><div class="post-info"><span class="post-nickname">${authorNickname}</span><span class="post-timestamp">${formatPostTimestamp(post.timestamp)}</span></div>
+                                <div class="post-actions-btn">…</div>
+                            </div>
+                            <div class="post-main-content">${contentHtml}</div>
+                            <div class="post-feedback-icons">
+                                <span class="action-icon like ${isLikedByUser ? "active" : ""}"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></span>
+                                <span class="action-icon favorite ${isFavoritedByUser ? "active" : ""}"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></span>
+                                <span class="action-icon summon-npc" data-post-id="${post.id}" data-author-id="${post.authorId}" title="召唤NPC评论"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+                                </div>
+                            ${likesHtml}
+                            ${commentsAndFooterHtml}
+                        `;
 
 						const deleteAction = document.createElement("div");
 						deleteAction.className = "qzone-post-delete-action";
@@ -34145,9 +34145,9 @@
 							item.className = "character-select-item"; // 复用“查手机”的样式
 							item.dataset.chatId = char.id;
 							item.innerHTML = `
-			                <img src="${char.settings.aiAvatar || defaultAvatar}" alt="${char.name}">
-			                <span class="name">${char.name}</span>
-			            `;
+                                <img src="${char.settings.aiAvatar || defaultAvatar}" alt="${char.name}">
+                                <span class="name">${char.name}</span>
+                            `;
 							listEl.appendChild(item);
 						});
 					}
@@ -34201,6 +34201,7 @@
 									})
 									.join("\n\n");
 						}
+						const userNickname = chat.settings.myNickname || "我";
 
 						const recentHistory = chat.history
 							.slice(-chat.settings.maxMemory || 20)
@@ -34209,9 +34210,7 @@
 								return `${sender}: ${msg.content}`;
 							})
 							.join("\n");
-						// ▲▲▲ 修改结束 ▲▲▲
-						// ▲▲▲ 修改结束 ▲▲▲
-						console.log("用于生成手机数据的最近聊天记录:", recentHistory);
+
 						let linkedMemoryContext = "";
 						if (chat.settings.linkedMemories && chat.settings.linkedMemories.length > 0) {
 							const contextPromises = chat.settings.linkedMemories.map(async (link) => {
