@@ -19672,6 +19672,13 @@
 					} catch (e) {
 						console.error("生成微博后台活动上下文时出错:", e);
 					}
+
+					const summaryContext = chat.history
+						.filter((msg) => msg.type === "summary")
+						.map((s) => s.content)
+						.join("\n");
+					combinedText += summaryContext;
+
 					// add by lrq 251029 添加聊天间隔时间
 					const lastMessage = chat.history.slice(-1)[0];
 					const timeSinceLastMessage = lastMessage ? Math.floor((Date.now() - lastMessage.timestamp) / 60000) : infinity;
@@ -19765,6 +19772,7 @@
 			-   **当前时间**: ${currentTime}
 			-   **你们最近的对话摘要**:
 			${recentContextSummary}
+            ${summaryContext}
 			${linkedMemoryContext}
 			-   **【【【微博专属设定(必须严格遵守)】】】**
 			    - 你的微博职业: ${chat.settings.weiboProfession || "无"}
@@ -23107,6 +23115,12 @@
 						const now = new Date();
 						const currentTime = now.toLocaleTimeString("zh-CN", { hour: "numeric", minute: "numeric", hour12: true });
 
+						const summaryContext = chat.history
+							.filter((msg) => msg.type === "summary")
+							.map((s) => s.content)
+							.join("\n");
+						combinedText += summaryContext;
+
 						// ▼▼▼ 从这里开始完整替换 ▼▼▼
 
 						// updated by lrq 251027
@@ -23152,6 +23166,7 @@
 			- **${myNickname}**: ${chat.settings.myPersona}
 			# 对话历史参考
 			${recentContextSummary}
+            ${summaryContext}
 			${linkedMemoryContext}
 
 			现在，请严格遵守以上所有规则，开始你的模拟。`;
