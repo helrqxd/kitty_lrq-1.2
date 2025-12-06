@@ -19,17 +19,12 @@ const logisticsTimelineTemplate = [
     { text: "您的快件已签收，感谢您在桃宝购物，期待再次为您服务！", delay: 1000 * 60 * 60 * 28 }, // 28小时后
 ];
 
-// ▼▼▼ 在这里粘贴下面的新代码 ▼▼▼
+
 const addProductChoiceModal = document.getElementById("add-product-choice-modal");
 const aiGeneratedProductsModal = document.getElementById("ai-generated-products-modal");
 const productSearchInput = document.getElementById("product-search-input");
 const productSearchBtn = document.getElementById("product-search-btn");
 const STICKER_REGEX = /^(https:\/\/i\.postimg\.cc\/.+|https:\/\/i\.ibb\.co\/.+|https:\/\/files\.catbox\.moe\/.+|data:image)/;
-// ▼▼▼ 在这里粘贴下面这整块新代码 ▼▼▼
-
-// ▼▼▼ 用这块【新代码】替换旧的 GENERIC_PRODUCT_PROMPTS 数组 ▼▼▼
-
-// ▼▼▼ 用这块【新代码】替换旧的 GENERIC_PRODUCT_PROMPTS 数组 ▼▼▼
 
 // 全局的、通用的商品图片提示词模板库
 // 我们会根据商品名称的关键词来智能匹配这些模板
@@ -88,9 +83,9 @@ const GENERIC_PRODUCT_PROMPTS = [
     },
 ];
 
-// ▲▲▲ 替换结束 ▲▲▲
+
 /**
- * 【全新】顺序处理图片生成队列
+ * 顺序处理图片生成队列
  * 这个函数会一个接一个地为队列中的商品/美食生成图片，避免并发请求。
  */
 async function processImageQueue() {
@@ -127,11 +122,8 @@ async function processImageQueue() {
     console.log("图片生成队列已处理完毕。");
 }
 
-// ▲▲▲ 新代码粘贴结束 ▲▲▲
-// ▼▼▼ 用这块【新代码】替换旧的 selectGenericImagePrompt 函数 ▼▼▼
-
 /**
- * 【V2 | 英文转译版】根据商品名智能选择一个通用的图片提示词
+ * 根据商品名智能选择一个通用的图片提示词
  * @param {string} productName - 商品的中文名
  * @returns {string} - 拼接好的、纯英文的提示词
  */
@@ -155,58 +147,14 @@ function selectGenericImagePrompt(productName) {
 
     console.log(`为“${productName}”匹配到分类: ${matchedTemplate.englishCategory}`);
 
-    // 3. 【核心修改】使用模板中预设的 "englishCategory" 替换占位符，而不是直接用中文名
+
     const finalPrompt = matchedTemplate.prompt.replace("{productName}", matchedTemplate.englishCategory);
 
     return finalPrompt;
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 用这块【V2 | 无限重试版】代码替换旧的 generateAndLoadImage 函数 ▼▼▼
 /**
- * 【V2 | 无限重试版】为Prompt生成并加载图片
- * @param {string} prompt - 用于生成图片的英文提示词
- * @returns {Promise<string>} - 返回一个Promise，它最终会resolve为一个有效的图片URL
- */
-async function generateAndLoadImage(prompt) {
-    while (true) {
-        // ★★★ 核心修改：这是一个无限循环 ★★★
-        try {
-            const encodedPrompt = encodeURIComponent(prompt);
-            const seed = Math.floor(Math.random() * 100000);
-
-            // 尝试主域名
-            const primaryUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=640&seed=${seed}`;
-
-            const loadImage = (url) =>
-                new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => resolve(url);
-                    img.onerror = () => reject(new Error(`URL加载失败: ${url}`));
-                });
-
-            const imageUrl = await loadImage(primaryUrl).catch(async () => {
-                console.warn(`主URL加载失败，尝试备用URL for: ${prompt}`);
-                const fallbackUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=640&seed=${seed}`;
-                return await loadImage(fallbackUrl);
-            });
-
-            // 如果任何一个URL成功加载，就返回结果，并跳出循环
-            return imageUrl;
-        } catch (error) {
-            // 如果主域名和备用域名都失败了...
-            console.error(`图片生成彻底失败，将在5秒后重试。错误: ${error.message}`);
-            // 等待5秒钟，然后循环会继续，开始下一次尝试
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-        }
-    }
-}
-// ▲▲▲ 替换结束 ▲▲▲
-
-/**
- * 【V2 | 无限重试版】为Prompt生成并加载图片
+ * 为Prompt生成并加载图片
  * @param {string} prompt - 用于生成图片的英文提示词
  * @returns {Promise<string>} - 返回一个Promise，它最终会resolve为一个有效的图片URL
  */
@@ -245,15 +193,53 @@ async function generateAndLoadImage(prompt) {
     }
 }
 
-// ▼▼▼ 用这块【V2 | 智能决策版】代码，替换旧的 processProductImage 函数 ▼▼▼
 
 /**
- * 【全新 | V2】异步处理单个商品图片的生成和保存
+ * 为Prompt生成并加载图片
+ * @param {string} prompt - 用于生成图片的英文提示词
+ * @returns {Promise<string>} - 返回一个Promise，它最终会resolve为一个有效的图片URL
+ */
+async function generateAndLoadImage(prompt) {
+    while (true) {
+        try {
+            const encodedPrompt = encodeURIComponent(prompt);
+            const seed = Math.floor(Math.random() * 100000);
+
+            // 尝试主域名
+            const primaryUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=640&seed=${seed}`;
+
+            const loadImage = (url) =>
+                new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.src = url;
+                    img.onload = () => resolve(url);
+                    img.onerror = () => reject(new Error(`URL加载失败: ${url}`));
+                });
+
+            const imageUrl = await loadImage(primaryUrl).catch(async () => {
+                console.warn(`主URL加载失败，尝试备用URL for: ${prompt}`);
+                const fallbackUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=640&seed=${seed}`;
+                return await loadImage(fallbackUrl);
+            });
+
+            // 如果任何一个URL成功加载，就返回结果，并跳出循环
+            return imageUrl;
+        } catch (error) {
+            // 如果主域名和备用域名都失败了...
+            console.error(`图片生成彻底失败，将在5秒后重试。错误: ${error.message}`);
+            // 等待5秒钟，然后循环会继续，开始下一次尝试
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+    }
+}
+
+/**
+ * 异步处理单个商品图片的生成和保存
  * @param {object} product - 商品对象
  */
 async function processProductImage(product) {
     try {
-        // ★★★ 核心修改：智能决策，决定使用哪个提示词 ★★★
+        // 智能决策，决定使用哪个提示词
         let imagePrompt;
         if (product.imagePrompt && product.imagePrompt.trim() !== "") {
             // 如果这个商品数据中自带了专属的 imagePrompt (通常来自AI生成)，就优先使用它！
@@ -271,7 +257,6 @@ async function processProductImage(product) {
         // 3. 将生成好的图片URL保存回“桃宝”的数据库，实现持久化
         await db.taobaoProducts.update(product.id, { imageUrl: imageUrl });
 
-        // 4. 更新界面上对应卡片的显示，用图片替换加载动画
         const cardElement = document.querySelector(`.product-card[data-product-id="${product.id}"]`);
         if (cardElement) {
             const imageContainer = cardElement.querySelector(".product-image-container");
@@ -291,17 +276,13 @@ async function processProductImage(product) {
     }
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 用这块【V2 | 智能选择提示词版】新代码，替换旧的 processFoodImage 函数 ▼▼▼
-
 /**
- * 【全新 | V2】异步处理单个美食图片的生成和保存
+ * 异步处理单个美食图片的生成和保存
  * @param {object} food - 美食对象
  */
 async function processFoodImage(food) {
     try {
-        // 1. ★★★ 智能决策：决定使用哪个提示词 ★★★
+        // 1. 智能决策：决定使用哪个提示词
         let imagePrompt;
         if (food.imagePrompt && food.imagePrompt.trim() !== "") {
             // 如果这个美食数据中自带了专属的 imagePrompt，就优先使用它！
@@ -319,7 +300,6 @@ async function processFoodImage(food) {
         // 3. 将生成好的图片URL保存回“饿了么”的数据库，实现持久化
         await db.elemeFoods.update(food.id, { imageUrl: imageUrl });
 
-        // 4. 更新界面上对应卡片的显示，用图片替换加载动画
         const cardElement = document.querySelector(`.product-card[data-food-id="${food.id}"]`);
         if (cardElement) {
             const imageContainer = cardElement.querySelector(".product-image-container");
@@ -340,19 +320,17 @@ async function processFoodImage(food) {
     }
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
 /**
- * 【最终版 | 无API调用 & 无限重试】为商品名称生成图片
+ * 为商品名称生成图片
  * @param {string} productName - 商品的中文名称
  * @returns {Promise<string>} - 返回一个Promise，它最终会resolve为一个有效的图片URL
  */
 async function generateImageForProduct(productName) {
-    // 1. 调用我们的新函数，根据商品名智能选择一个提示词（不再需要API！）
+    // 1. 调用新函数，根据商品名智能选择一个提示词（不再需要API！）
     const imagePrompt = selectGenericImagePrompt(productName);
     console.log(`为“${productName}”选定的提示词:`, imagePrompt);
 
-    // 2. 调用我们已具备“无限重试”功能的核心图片生成函数
+    // 2. 调用已具备“无限重试”功能的核心图片生成函数
     // 这个函数会一直尝试，直到成功返回一个图片URL
     try {
         const imageUrl = await generateAndLoadImage(imagePrompt);
@@ -391,8 +369,8 @@ async function renderChatList() {
         chatListEl.appendChild(item);
     });
 
-    // 5. 【接下来处理未置顶的聊天】应用您之前的分组逻辑
-    // 为每个分组找到其内部最新的消息时间戳 (只在未置顶聊天中查找)
+
+    // 5. 为每个分组找到其内部最新的消息时间戳 (只在未置顶聊天中查找)
     allGroups.forEach((group) => {
         const latestChatInGroup = unpinnedChats
             .filter((chat) => chat.groupId === group.id) // 找到属于这个组的聊天
@@ -413,7 +391,7 @@ async function renderChatList() {
         const groupContainer = document.createElement("div");
         groupContainer.className = "chat-group-container";
 
-        // 【核心修改】下面这两行代码里，我已经删除了 collapsed 类，这样默认就是展开的了！
+
         groupContainer.innerHTML = `
             <div class="chat-group-header">
                 <span class="arrow">▼</span>
@@ -446,7 +424,7 @@ async function renderChatList() {
         });
     });
 }
-// ▼▼▼ 用这块【V3 - Emoji图标版】代码，完整替换你旧的 createChatListItem 函数 ▼▼▼
+
 function createChatListItem(chat) {
     const lastMsgObj = chat.history.filter((msg) => !msg.isHidden).slice(-1)[0] || {};
     let lastMsgDisplay;
@@ -492,7 +470,6 @@ function createChatListItem(chat) {
 
     const avatar = chat.isGroup ? chat.settings.groupAvatar : chat.settings.aiAvatar;
 
-    // ★★★★★ 这就是我们本次修改的核心！ ★★★★★
     let streakHtml = "";
     // 检查是否为单聊、功能是否开启
     if (!chat.isGroup && chat.settings.streak && chat.settings.streak.enabled) {
@@ -526,7 +503,7 @@ function createChatListItem(chat) {
 
         // 拼接最终的HTML
         if (iconHtml) {
-            // 【核心修改】在这里我们增加一个判断
+
             // 如果火花已熄灭 (isExtinguished 为 true)
             if (isExtinguished) {
                 // 就只显示熄灭的图标，不显示天数
@@ -543,9 +520,7 @@ function createChatListItem(chat) {
             }
         }
     }
-    // ★★★★★ 修改结束 ★★★★★
 
-    // 后续的HTML拼接部分保持不变
     content.innerHTML = `
         <div class="chat-list-item" data-chat-id="${chat.id}">
             <img src="${avatar || defaultAvatar}" class="avatar">
@@ -566,7 +541,6 @@ function createChatListItem(chat) {
         </div>
     `;
 
-    // 后续的所有代码都保持不变...
     const actions = document.createElement("div");
     actions.className = "swipe-actions";
     const pinButtonText = chat.isPinned ? "取消置顶" : "置顶";
@@ -601,7 +575,7 @@ function createChatListItem(chat) {
 }
 
 /**
- * 【全新】根据时间戳，格式化聊天列表右侧的日期/时间显示
+ * 根据时间戳，格式化聊天列表右侧的日期/时间显示
  * @param {number} timestamp - 消息的时间戳
  * @returns {string} - 格式化后的字符串 (例如 "14:30", "昨天", "08/03")
  */
@@ -643,8 +617,6 @@ function formatChatListTimestamp(timestamp) {
     return `${year}/${month}/${day}`;
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-// ▲▲▲ 替换结束 ▲▲▲
 function showNotification(chatId, messageContent) {
     playNotificationSound();
     clearTimeout(notificationTimeout);
@@ -681,7 +653,7 @@ function addLongPressListener(element, callback) {
     element.addEventListener("touchmove", cancelPress);
 }
 /**
- * 【优化版】播放消息提示音，增加健壮性
+ * 播放消息提示音，增加健壮性
  */
 function playNotificationSound() {
     const soundUrl = state.globalSettings.notificationSoundUrl || "https://laddy-lulu.github.io/Ephone-stuffs/message.mp3";
@@ -706,9 +678,9 @@ function playNotificationSound() {
         console.error("创建提示音Audio对象时出错:", error);
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
+
 /**
- * 【全新】获取一张随机的外卖默认图片
+ * 获取一张随机的外卖默认图片
  * @returns {string} - 返回一张随机图片的URL
  */
 function getRandomWaimaiImage() {
@@ -716,10 +688,9 @@ function getRandomWaimaiImage() {
     return defaultImages[Math.floor(Math.random() * defaultImages.length)];
 }
 
-// 在这里找到你原来的 getRandomDefaultProductImage 函数...
 
 /**
- * 【全新】获取一张随机的淘宝宝贝默认图片
+ * 获取一张随机的淘宝宝贝默认图片
  * @returns {string} - 返回一张随机图片的URL
  */
 function getRandomDefaultProductImage() {
@@ -728,11 +699,8 @@ function getRandomDefaultProductImage() {
     return defaultImages[Math.floor(Math.random() * defaultImages.length)];
 }
 
-// ▲▲▲ 新增代码粘贴结束 ▲▲▲
-// ▼▼▼ 把这两块全新的函数，粘贴到 init() 函数的上方 ▼▼▼
-
 /**
- * 【全新】核心函数：更新用户余额并记录一笔交易
+ * 核心函数：更新用户余额并记录一笔交易
  * @param {number} amount - 交易金额 (正数为收入, 负数为支出)
  * @param {string} description - 交易描述 (例如: "转账给 XX", "收到 XX 的红包")
  */
@@ -758,7 +726,7 @@ async function updateUserBalanceAndLogTransaction(amount, description) {
     console.log(`用户钱包已更新: 金额=${amount.toFixed(2)}, 新余额=${state.globalSettings.userBalance.toFixed(2)}`);
 }
 /**
- * 【全新】处理角色手机钱包余额和交易记录的通用函数
+ * 处理角色手机钱包余额和交易记录的通用函数
  * @param {string} charId - 要更新钱包的角色ID
  * @param {number} amount - 交易金额 (正数为收入, 负数为支出)
  * @param {string} description - 交易描述
@@ -789,10 +757,10 @@ async function updateCharacterPhoneBankBalance(charId, amount, description) {
     await db.chats.put(chat);
     console.log(`✅ 角色[${chat.name}]钱包已更新: 金额=${amount.toFixed(2)}, 新余额=${chat.characterPhoneData.bank.balance.toFixed(2)}`);
 }
-/* --- 【全新】“桃宝”App 核心功能函数 --- */
+
 
 /**
- * 【全新 | 已修复】清空桃宝首页的所有商品及购物车
+ * 清空桃宝首页的所有商品及购物车
  */
 async function clearTaobaoProducts() {
     // 1. 修改提示语，告知用户购物车也会被清空
@@ -804,15 +772,15 @@ async function clearTaobaoProducts() {
             await db.transaction("rw", db.taobaoProducts, db.taobaoCart, async () => {
                 // 清空商品库
                 await db.taobaoProducts.clear();
-                // ▼▼▼ 核心新增代码1：清空购物车数据库 ▼▼▼
+                // 清空购物车数据库
                 await db.taobaoCart.clear();
             });
 
             // 重新渲染UI
             await renderTaobaoProducts();
-            // ▼▼▼ 核心新增代码2：刷新购物车UI（让页面变空） ▼▼▼
+            // 刷新购物车UI（让页面变空）
             await renderTaobaoCart();
-            // ▼▼▼ 核心新增代码3：更新购物车角标（让红点消失） ▼▼▼
+            // 更新购物车角标（让红点消失）
             updateCartBadge();
 
             // 2. 修改成功提示
@@ -825,7 +793,7 @@ async function clearTaobaoProducts() {
 }
 
 /**
- * 【总入口】打开“桃宝”App，并渲染默认视图
+ * 打开“桃宝”App，并渲染默认视图
  */
 async function openTaobaoApp() {
     showScreen("taobao-screen");
@@ -833,10 +801,8 @@ async function openTaobaoApp() {
     renderBalanceDetails(); // 刷新余额显示
 }
 
-// ▼▼▼ 用这块【修改后】的代码，替换旧的 renderElemeFoods 函数 ▼▼▼
-
 /**
- * 【V3 | 顺序生图版】渲染“饿了么”页面的美食列表
+ * 渲染“饿了么”页面的美食列表
  */
 async function renderElemeFoods() {
     const gridEl = document.getElementById("eleme-grid");
@@ -870,7 +836,6 @@ async function renderElemeFoods() {
             imageContainer.innerHTML = `<img src="${food.imageUrl}" class="product-image" alt="${food.name}">`;
         } else {
             imageContainer.innerHTML = `<div class="loading-spinner"></div>`;
-            // ★★★ 核心修改1：不再直接调用，而是将任务添加到队列 ★★★
             imageGenerationQueue.push({ type: "eleme", item: food });
         }
 
@@ -878,14 +843,12 @@ async function renderElemeFoods() {
         gridEl.appendChild(card);
     });
 
-    // ★★★ 核心修改2：渲染完所有卡片后，触发一次队列处理器 ★★★
+    // 渲染完所有卡片后，触发一次队列处理器
     processImageQueue();
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
 /**
- * 【全新】打开美食详情弹窗
+ * 打开美食详情弹窗
  * @param {number} foodId - 美食的ID
  */
 async function openFoodDetail(foodId) {
@@ -946,9 +909,9 @@ async function clearElemeFoods() {
     }
 }
 
-// ▼▼▼ 用这块【V3-多品类版】代码，完整替换旧的 handleGenerateFoodsAI 函数 ▼▼▼
+
 /**
- * 【AI核心 | V3多品类版】为“饿了么”随机生成商品
+ * 为“饿了么”随机生成商品
  */
 async function handleGenerateFoodsAI() {
     await showCustomAlert("请稍候...", "AI正在搜罗全城好物...");
@@ -1032,11 +995,9 @@ async function handleGenerateFoodsAI() {
         await showCustomAlert("生成失败", `发生错误: ${error.message}`);
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
 
-// ▼▼▼ 用这块【V3-多品类版】代码，完整替换旧的 handleSearchFoodsAI 函数 ▼▼▼
 /**
- * 【AI核心 | V3多品类版】根据关键词搜索商品
+ * 根据关键词搜索商品
  */
 async function handleSearchFoodsAI() {
     const searchTerm = document.getElementById("eleme-search-input").value.trim();
@@ -1123,10 +1084,10 @@ async function handleSearchFoodsAI() {
         await showCustomAlert("搜索失败", `发生错误: ${error.message}`);
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
+
 
 /**
- * 【修改版】打开美食编辑器（支持添加和编辑）
+ * 打开美食编辑器（支持添加和编辑）
  * @param {number|null} foodId - 如果是编辑模式，传入美食ID；否则为null
  */
 async function openFoodEditor(foodId = null) {
@@ -1166,7 +1127,7 @@ async function openFoodEditor(foodId = null) {
 }
 
 /**
- * 【修改版】保存手动添加或编辑的美食
+ * 保存手动添加或编辑的美食
  */
 async function saveFoodItem() {
     const name = document.getElementById("product-name-input").value.trim();
@@ -1208,9 +1169,9 @@ async function saveFoodItem() {
     }
 }
 
-// ▼▼▼ 用这块【V2-带备注版】代码，完整替换旧的 handleOrderForChar 函数 ▼▼▼
+
 /**
- * 【全新 | V2带备注版】核心函数：处理用户点击“给Ta点单”的完整流程
+ * 核心函数：处理用户点击“给Ta点单”的完整流程
  * @param {number} foodId - 被点击的美食的ID
  */
 async function handleOrderForChar(foodId) {
@@ -1234,7 +1195,6 @@ async function handleOrderForChar(foodId) {
     const confirmed = await showCustomConfirm("确认点单", `确定要花费 ¥${food.price.toFixed(2)} 为“${char.name}”点一份“${food.name}”吗？`, { confirmText: "立即下单" });
 
     if (confirmed) {
-        // ★★★★★ 核心新增：在这里弹出备注输入框 ★★★★★
         const remark = await showCustomPrompt(
             "外卖备注 (可选)",
             "有什么想对骑手或商家说的吗？",
@@ -1256,17 +1216,16 @@ async function handleOrderForChar(foodId) {
             recipientId: targetCharId,
         });
 
-        // 6. ★★★★★ 核心修改：将备注传给通知函数 ★★★★★
         await sendElemeOrderNotificationToChar(targetCharId, food, remark);
 
         await showCustomAlert("下单成功！", `已为“${char.name}”点好外卖，并已通过私信通知对方啦！`);
         renderChatList();
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
+
 
 /**
- * 【全新】辅助函数：打开一个单选的角色选择器
+ * 辅助函数：打开一个单选的角色选择器
  * @returns {Promise<string|null>} - 返回选中的角色ID，如果取消则返回null
  */
 async function openCharSelectorForEleme() {
@@ -1328,9 +1287,9 @@ async function openCharSelectorForEleme() {
     });
 }
 
-// ▼▼▼ 用这块【V2-带备注版】代码，完整替换旧的 sendElemeOrderNotificationToChar 函数 ▼▼▼
+
 /**
- * 【全新 | V2带备注】发送外卖订单通知到指定角色的聊天
+ * 发送外卖订单通知到指定角色的聊天
  */
 async function sendElemeOrderNotificationToChar(targetChatId, food, remark) {
     const chat = state.chats[targetChatId];
@@ -1377,7 +1336,7 @@ async function sendElemeOrderNotificationToChar(targetChatId, food, remark) {
     // 主动触发AI回应
     openChat(targetChatId);
 }
-// ▲▲▲ 替换结束 ▲▲▲
+
 
 function switchTaobaoView(viewId) {
     document.querySelectorAll(".taobao-view").forEach((v) => v.classList.remove("active"));
@@ -1400,7 +1359,7 @@ function switchTaobaoView(viewId) {
 }
 
 /**
- * 【全新】渲染购物车页面
+ * 渲染购物车页面
  */
 async function renderTaobaoCart() {
     const listEl = document.getElementById("cart-item-list");
@@ -1454,7 +1413,7 @@ async function renderTaobaoCart() {
 }
 
 /**
- * 【全新】更新购物车图标上的角标数量
+ * 更新购物车图标上的角标数量
  */
 function updateCartBadge() {
     const badge = document.getElementById("cart-item-count-badge");
@@ -1470,7 +1429,7 @@ function updateCartBadge() {
 }
 
 /**
- * 【全新】处理加入购物车的逻辑
+ * 处理加入购物车的逻辑
  */
 async function handleAddToCart(productId) {
     const existingItem = await db.taobaoCart.where("productId").equals(productId).first();
@@ -1486,7 +1445,7 @@ async function handleAddToCart(productId) {
 }
 
 /**
- * 【全新】处理购物车内商品数量的变化
+ * 处理购物车内商品数量的变化
  */
 async function handleChangeCartItemQuantity(cartId, change) {
     const item = await db.taobaoCart.get(cartId);
@@ -1503,7 +1462,7 @@ async function handleChangeCartItemQuantity(cartId, change) {
 }
 
 /**
- * 【全新】从购物车中移除商品
+ * 从购物车中移除商品
  */
 async function handleRemoveFromCart(cartId) {
     await db.taobaoCart.delete(cartId);
@@ -1511,7 +1470,7 @@ async function handleRemoveFromCart(cartId) {
 }
 
 /**
- * 【全新 | 已修复状态污染问题】打开商品详情弹窗
+ * 打开商品详情弹窗
  */
 async function openProductDetail(productId) {
     const product = await db.taobaoProducts.get(productId);
@@ -1524,7 +1483,7 @@ async function openProductDetail(productId) {
     const generateBtn = document.getElementById("generate-reviews-btn");
     const actionBtn = document.getElementById("detail-add-to-cart-btn");
 
-    // ★★★ 核心修复1：强制重置UI状态 ★★★
+    // 强制重置UI状态
     // 无论上次是什么状态，都确保评价区是可见的
     reviewsSection.style.display = "block";
 
@@ -1559,17 +1518,16 @@ async function openProductDetail(productId) {
     generateBtn.parentNode.replaceChild(newGenerateBtn, generateBtn);
     newGenerateBtn.addEventListener("click", () => generateProductReviews(productId));
 
-    // ★★★ 核心修复2：强制重置按钮并重新绑定事件 ★★★
+    // 强制重置按钮并重新绑定事件
     // 先克隆按钮以清除旧事件监听器
     const newAddToCartBtn = actionBtn.cloneNode(true);
-    // 【关键】强制把按钮文字改回“加入购物车”
+
     newAddToCartBtn.textContent = "加入购物车";
     // 为新按钮绑定正确的“加入购物车”逻辑
     newAddToCartBtn.onclick = async () => {
         await handleAddToCart(productId);
         modal.classList.remove("visible"); // 添加后自动关闭弹窗
     };
-    // 用焕然一新的按钮替换掉旧的那个
     actionBtn.parentNode.replaceChild(newAddToCartBtn, actionBtn);
 
     // 绑定关闭按钮
@@ -1580,7 +1538,7 @@ async function openProductDetail(productId) {
 }
 
 /**
- * 【全新】AI核心：为指定商品生成评价
+ * 为指定商品生成评价
  * @param {number} productId - 商品的ID
  */
 async function generateProductReviews(productId) {
@@ -1658,11 +1616,9 @@ async function generateProductReviews(productId) {
         await showCustomAlert("生成失败", `发生错误: ${error.message}`);
     }
 }
-// ▲▲▲ 新增功能函数结束 ▲▲▲
 
-// ▼▼▼ 用这块【已集成物流】的代码，替换旧的 handleCheckout 函数 ▼▼▼
 /**
- * 【全新】结算购物车
+ * 结算购物车
  */
 async function handleCheckout() {
     const checkoutBtn = document.getElementById("checkout-btn");
@@ -1696,7 +1652,7 @@ async function handleCheckout() {
 
         await updateUserBalanceAndLogTransaction(-totalPrice, description);
 
-        // ★★★ 核心修改：为每个订单创建物流历史起点 ★★★
+        // 为每个订单创建物流历史起点
         const newOrders = cartItems.map((item, index) => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -1713,12 +1669,9 @@ async function handleCheckout() {
         switchTaobaoView("orders-view");
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 用这块【修改后】的代码，替换旧的 renderTaobaoProducts 函数 ▼▼▼
 
 /**
- * 【V4 | 顺序生图版】渲染商品列表，按需生成并永久保存图片
+ * 渲染商品列表，按需生成并永久保存图片
  */
 async function renderTaobaoProducts(category = null) {
     const gridEl = document.getElementById("product-grid");
@@ -1726,9 +1679,6 @@ async function renderTaobaoProducts(category = null) {
 
     const allProducts = await db.taobaoProducts.orderBy("name").toArray();
     const categories = [...new Set(allProducts.map((p) => p.category).filter(Boolean))];
-
-    // (这部分渲染分类tab的代码保持不变)
-    // ...
 
     const productsToRender = category ? allProducts.filter((p) => p.category === category) : allProducts;
 
@@ -1758,7 +1708,6 @@ async function renderTaobaoProducts(category = null) {
             imageContainer.innerHTML = `<img src="${product.imageUrl}" class="product-image" alt="${product.name}">`;
         } else {
             imageContainer.innerHTML = `<div class="loading-spinner"></div>`;
-            // ★★★ 核心修改1：不再直接调用，而是将任务添加到队列 ★★★
             imageGenerationQueue.push({ type: "taobao", item: product });
         }
 
@@ -1766,11 +1715,9 @@ async function renderTaobaoProducts(category = null) {
         gridEl.appendChild(card);
     });
 
-    // ★★★ 核心修改2：渲染完所有卡片后，触发一次队列处理器 ★★★
+    // 渲染完所有卡片后，触发一次队列处理器
     processImageQueue();
 }
-
-// ▲▲▲ 替换结束 ▲▲▲
 
 /**
  * 渲染“我的订单”列表
@@ -1849,9 +1796,9 @@ function openProductEditor(productId = null) {
     modal.classList.add("visible");
 }
 
-// ▼▼▼ 用这两块【新代码】分别替换旧的 saveProduct 和 saveFoodItem 函数 ▼▼▼
+
 /**
- * 【V3 | AI生图版】保存手动添加或编辑的商品
+ * 保存手动添加或编辑的商品
  */
 async function saveProduct() {
     const name = document.getElementById("product-name-input").value.trim();
@@ -1864,13 +1811,12 @@ async function saveProduct() {
         return;
     }
 
-    // --- ★★★ 核心修改在这里 ★★★ ---
-    // 如果用户没有提供图片链接，我们就保存一个空字符串。
+    // 如果用户没有提供图片链接，保存一个空字符串。
     // 新的渲染逻辑会自动检测到空链接并触发AI生图。
     if (!imageUrl) {
         imageUrl = ""; // 设置为空，让渲染器去处理
     }
-    // --- ▲▲▲ 修改结束 ▲▲▲
+
 
     const productData = { name, price, imageUrl, category };
 
@@ -1888,7 +1834,7 @@ async function saveProduct() {
 }
 
 /**
- * 【AI生图版】保存手动添加的美食
+ * 保存手动添加的美食
  */
 async function saveFoodItem() {
     const name = document.getElementById("product-name-input").value.trim();
@@ -1901,8 +1847,7 @@ async function saveFoodItem() {
         return;
     }
 
-    // ★★★ 核心修改在这里 ★★★
-    // 如果用户没有提供图片链接，我们就保存一个空字符串。
+    // 如果用户没有提供图片链接，保存一个空字符串。
     // 这样新的渲染逻辑就会自动检测到并触发AI生图。
     if (!imageUrl) {
         imageUrl = ""; // 设置为空，让渲染器去处理
@@ -1918,8 +1863,6 @@ async function saveFoodItem() {
     await renderElemeFoods();
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
 /**
  * 打开识别链接的弹窗
  */
@@ -1928,10 +1871,8 @@ function openAddFromLinkModal() {
     document.getElementById("add-from-link-modal").classList.add("visible");
 }
 
-// ▼▼▼ 在 taobao.js 中，用这块【新代码】替换旧的 handleAddFromLink 函数 ▼▼▼
-
 /**
- * 【V2 | AI生图版】核心功能：处理粘贴的分享文案
+ * 处理粘贴的分享文案
  */
 async function handleAddFromLink() {
     const text = document.getElementById("link-paste-area").value;
@@ -1953,7 +1894,6 @@ async function handleAddFromLink() {
         return;
     }
 
-    // --- ★★★ 核心修改在这里 ★★★ ---
     let imageUrl = await showCustomPrompt(`商品: ${name}`, "请输入图片链接 (URL, 可选，留空则由AI生成):");
     if (imageUrl === null) return;
 
@@ -1967,7 +1907,7 @@ async function handleAddFromLink() {
             imageUrl = getRandomDefaultProductImage();
         }
     }
-    // --- ▲▲▲ 修改结束 ▲▲▲
+
 
     const category = await showCustomPrompt(`商品: ${name}`, "请输入分类 (可选):");
 
@@ -1976,11 +1916,8 @@ async function handleAddFromLink() {
     alert("商品已通过链接添加成功！");
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 在 taobao.js 中，用这块【V2.1 | 修复API调用】的代码替换旧的 handleSearchProductsAI 函数 ▼▼▼
 /**
- * 【V2.1 | AI生图版】核心功能：根据用户搜索触发AI生成商品
+ * 根据用户搜索触发AI生成商品
  */
 async function handleSearchProductsAI() {
     const searchTerm = productSearchInput.value.trim();
@@ -2025,7 +1962,7 @@ async function handleSearchProductsAI() {
     try {
         const messagesForApi = [{ role: "user", content: prompt }];
 
-        // ★★★ 核心修复：恢复对 Gemini 和 OpenAI 的兼容判断逻辑 ★★★
+        // 恢复对 Gemini 和 OpenAI 的兼容判断逻辑
         const isGemini = proxyUrl === GEMINI_API_URL;
         const requestData = isGemini
             ? toGeminiRequestData(model, apiKey, prompt, messagesForApi, isGemini)
@@ -2064,7 +2001,7 @@ async function handleSearchProductsAI() {
 }
 
 /**
- * 【V2 | AI生图版】UI函数：在弹窗中显示AI生成的商品列表，并异步加载图片
+ * UI函数：在弹窗中显示AI生成的商品列表，并异步加载图片
  * @param {Array} products - AI生成的商品对象数组
  * @param {string} title - 弹窗的标题
  */
@@ -2081,9 +2018,7 @@ function displayAiGeneratedProducts(products, title) {
         card.className = "product-card";
         card.id = `ai-product-${index}`;
 
-        // ▼▼▼ 在 displayAiGeneratedProducts 函数中 ▼▼▼
-
-        // ★★★ 核心修复：在放入HTML属性前，先对JSON字符串进行转义，防止引号冲突 ★★★
+        // 在放入HTML属性前，先对JSON字符串进行转义，防止引号冲突
         // 1. 将商品对象转换为JSON字符串
         const productJsonString = JSON.stringify(product);
         // 2. 将字符串中的单引号替换为HTML实体编码
@@ -2101,7 +2036,7 @@ function displayAiGeneratedProducts(products, title) {
     `;
         gridEl.appendChild(card);
 
-        // --- ★★★ 核心修改：调用异步函数去加载图片 ★★★ ---
+        // 调用异步函数加载图片
         // 这个函数会在后台默默生图，成功后再更新这张卡片
         loadAndDisplayAiProductImage(product, card);
     });
@@ -2110,7 +2045,7 @@ function displayAiGeneratedProducts(products, title) {
 }
 
 /**
- * 【全新】辅助函数：为AI生成的单个商品卡片加载图片
+ * 为AI生成的单个商品卡片加载图片
  * @param {object} productData - 商品数据，包含 imagePrompt
  * @param {HTMLElement} cardElement - 对应的商品卡片DOM元素
  */
@@ -2119,7 +2054,7 @@ async function loadAndDisplayAiProductImage(productData, cardElement) {
     if (!imageContainer) return;
 
     try {
-        // 1. 【联动】调用我们具备“无限重试”功能的图片生成函数，并传入AI给的专属Prompt
+        // 1. 【联动】调用具备“无限重试”功能的图片生成函数，并传入AI给的专属Prompt
         const imageUrl = await generateAndLoadImage(productData.imagePrompt);
 
         // 2. 将生成好的图片URL【回写】到商品数据中，方便“添加到主页”时使用
@@ -2144,10 +2079,8 @@ async function loadAndDisplayAiProductImage(productData, cardElement) {
     }
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
 /**
- * 【V2.1 | AI生图版】核心功能：触发AI【随机】生成商品，并在弹窗中显示
+ * 触发AI【随机】生成商品，并在弹窗中显示
  */
 async function handleGenerateProductsAI() {
     await showCustomAlert("请稍候...", "正在请求AI生成一批有趣的商品...");
@@ -2183,7 +2116,7 @@ async function handleGenerateProductsAI() {
     try {
         const messagesForApi = [{ role: "user", content: prompt }];
 
-        // ★★★ 核心修复：恢复对 Gemini 和 OpenAI 的兼容判断逻辑 ★★★
+        // 恢复对 Gemini 和 OpenAI 的兼容判断逻辑
         const isGemini = proxyUrl === GEMINI_API_URL;
         const requestData = isGemini
             ? toGeminiRequestData(model, apiKey, prompt, messagesForApi, isGemini)
@@ -2285,9 +2218,9 @@ async function showProductActions(productId) {
         }
     }
 }
-// ▼▼▼ 把这两块全新的函数，粘贴到 init() 函数的上方 ▼▼▼
+
 /**
- * 【全新】长按饿了么美食时显示操作菜单
+ * 长按饿了么美食时显示操作菜单
  * @param {number} foodId - 美食的ID
  */
 async function showFoodActions(foodId) {
@@ -2314,7 +2247,7 @@ async function showFoodActions(foodId) {
 }
 
 /**
- * 【全新】核心函数：更新用户余额并记录一笔交易
+ * 核心函数：更新用户余额并记录一笔交易
  * @param {number} amount - 交易金额 (正数为收入, 负数为支出)
  * @param {string} description - 交易描述 (例如: "转账给 XX", "收到 XX 的红包")
  */
@@ -2340,7 +2273,7 @@ async function updateUserBalanceAndLogTransaction(amount, description) {
     console.log(`用户钱包已更新: 金额=${amount.toFixed(2)}, 新余额=${state.globalSettings.userBalance.toFixed(2)}`);
 }
 /**
- * 【全新增强版】处理删除单条交易记录（收入或支出）
+ * 处理删除单条交易记录（收入或支出）
  * @param {number} transactionId - 要删除的交易记录的ID
  */
 async function handleDeleteTransaction(transactionId) {
@@ -2351,7 +2284,7 @@ async function handleDeleteTransaction(transactionId) {
         return;
     }
 
-    // ★★★ 核心修改1：根据记录类型，生成动态的、更清晰的提示信息 ★★★
+    // 根据记录类型，生成动态的、更清晰的提示信息
     const actionText = transaction.type === "income" ? "扣除" : "返还";
     const confirmMessage = `确定要删除这条【${transaction.type === "income" ? "收入" : "支出"}】记录吗？<br><br>此操作会将 <strong>¥${transaction.amount.toFixed(2)}</strong> 从您的余额中**${actionText}**。`;
 
@@ -2366,7 +2299,7 @@ async function handleDeleteTransaction(transactionId) {
     try {
         // 2. 使用数据库事务来保证数据安全
         await db.transaction("rw", db.globalSettings, db.userWalletTransactions, async () => {
-            // ★★★ 核心修改2：根据记录类型，决定是加余额还是减余额 ★★★
+            // 根据记录类型，决定是加余额还是减余额
             if (transaction.type === "income") {
                 // 如果删除的是一笔收入，那么总余额应该减少
                 state.globalSettings.userBalance -= transaction.amount;
@@ -2393,7 +2326,7 @@ async function handleDeleteTransaction(transactionId) {
 }
 
 /**
- * 【全新 | V2版】渲染“我的”页面的余额和交易明细 (支持删除所有记录)
+ * 渲染“我的”页面的余额和交易明细 (支持删除所有记录)
  */
 async function renderBalanceDetails() {
     // 1. 渲染当前余额
@@ -2419,7 +2352,7 @@ async function renderBalanceDetails() {
         itemEl.className = "transaction-item";
         const sign = item.type === "income" ? "+" : "-";
 
-        // ★★★ 核心修改：我们移除了 if 判断，现在为每一条记录都生成删除按钮 ★★★
+        // 移除了 if 判断，现在为每一条记录都生成删除按钮
         const deleteButtonHtml = `<button class="delete-transaction-btn" data-transaction-id="${item.id}">×</button>`;
 
         itemEl.innerHTML = `
@@ -2438,10 +2371,8 @@ async function renderBalanceDetails() {
     });
 }
 
-// ▼▼▼ 在 init() 函数的上方，粘贴下面这 3 个新函数 ▼▼▼
-
 /**
- * 【全新】打开物流详情页面
+ * 打开物流详情页面
  * @param {number} orderId - 被点击的订单ID
  */
 async function openLogisticsView(orderId) {
@@ -2461,7 +2392,7 @@ async function openLogisticsView(orderId) {
 }
 
 /**
- * 【全新】渲染物流详情页面的所有内容
+ * 渲染物流详情页面的所有内容
  * @param {object} order - 订单对象
  */
 async function renderLogisticsView(order) {
@@ -2540,7 +2471,7 @@ async function renderLogisticsView(order) {
 }
 
 /**
- * 【全新】在时间轴上添加一个物流步骤的辅助函数
+ * 在时间轴上添加一个物流步骤的辅助函数
  * @param {HTMLElement} container - 时间轴的DOM容器
  * @param {HTMLElement} mainStatusEl - 顶部主状态的DOM元素
  * @param {string} text - 物流信息文本
@@ -2564,11 +2495,9 @@ function addLogisticsStep(container, mainStatusEl, text, timestamp, prepend = fa
         container.appendChild(stepEl);
     }
 }
-// ▲▲▲ 粘贴结束 ▲▲▲
-// ▼▼▼ 把这一整块全新的功能函数，粘贴到 init() 函数的正上方 ▼▼▼
 
 /**
- * 【全新】处理角色手机钱包余额和交易记录的通用函数
+ * 处理角色手机钱包余额和交易记录的通用函数
  * @param {string} charId - 要更新钱包的角色ID
  * @param {number} amount - 交易金额 (正数为收入, 负数为支出)
  * @param {string} description - 交易描述
@@ -2601,7 +2530,7 @@ async function updateCharacterPhoneBankBalance(charId, amount, description) {
 }
 
 /**
- * 【全新】打开一个单选的角色选择器，让用户选择一个代付对象
+ * 打开一个单选的角色选择器，让用户选择一个代付对象
  * @returns {Promise<string|null>} - 返回选中的角色ID，如果取消则返回null
  */
 async function openCharSelectorForCart() {
@@ -2666,7 +2595,7 @@ async function openCharSelectorForCart() {
 }
 
 /**
- * 【全新】清空桃宝购物车
+ * 清空桃宝购物车
  */
 async function clearTaobaoCart() {
     await db.taobaoCart.clear();
@@ -2675,7 +2604,7 @@ async function clearTaobaoCart() {
 }
 
 /**
- * 【全新】根据购物车内容创建订单
+ * 根据购物车内容创建订单
  * @param {Array} cartItems - 购物车项目数组
  */
 async function createOrdersFromCart(cartItems) {
@@ -2696,10 +2625,8 @@ async function createOrdersFromCart(cartItems) {
     }, 1000 * 10);
 }
 
-// ▼▼▼ 请用下面这整块【修复后】的代码，完整替换掉你旧的 handleShareCart 函数 ▼▼▼
-
 /**
- * 【全新总入口 | 已修复备注名】处理“分享给Ta代付”的全部逻辑
+ * 处理“分享给Ta代付”的全部逻辑
  */
 async function handleShareCart() {
     const cartItems = await db.taobaoCart.toArray();
@@ -2736,8 +2663,6 @@ async function handleShareCart() {
 
     await showCustomAlert("处理中...", "正在通知Ta代付并下单...");
 
-    // --- ▼▼▼ 这就是本次的核心修改 ▼▼▼ ---
-
     // 1. 获取角色的手机数据，准备查找备注名
     const characterPhoneData = char.characterPhoneData || { chats: {} };
 
@@ -2751,8 +2676,6 @@ async function handleShareCart() {
     // 4. 使用这个新的备注名来创建交易记录
     const description = `为“${remarkForUser}”的桃宝购物车买单`;
     await updateCharacterPhoneBankBalance(targetChatId, -totalPrice, description);
-
-    // --- ▲▲▲ 修改结束 ▲▲▲ ---
 
     await createOrdersFromCart(cartItems);
 
@@ -2777,12 +2700,8 @@ async function handleShareCart() {
     triggerAiResponse(); // 让AI回应这次代付
 }
 
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 把下面这两块全新的函数，粘贴到你的JS功能函数定义区 ▼▼▼
-
 /**
- * 【全新】处理“为Ta购买”的全部逻辑
+ * 处理“为Ta购买”的全部逻辑
  */
 async function handleBuyForChar() {
     const cartItems = await db.taobaoCart.toArray();
@@ -2834,11 +2753,8 @@ async function handleBuyForChar() {
     }
 }
 
-// ▼▼▼ 用这块【新代码】替换旧的 sendGiftNotificationToChar 函数 ▼▼▼
-// ▼▼▼ 把下面这两块全新的函数，粘贴到你的JS功能函数定义区 ▼▼▼
-
 /**
- * 【全新】处理“为Ta购买”的全部逻辑
+ * 处理“为Ta购买”的全部逻辑
  */
 async function handleBuyForChar() {
     const cartItems = await db.taobaoCart.toArray();
@@ -2890,10 +2806,8 @@ async function handleBuyForChar() {
     }
 }
 
-// ▼▼▼ 用这块【最终正确版】代码，完整替换旧的 sendGiftNotificationToChar 函数 ▼▼▼
-
 /**
- * 【全新 | 最终正确版】发送礼物通知到指定角色的聊天
+ * 发送礼物通知到指定角色的聊天
  * 效果：发送一条本质是文本、但外观是卡片的消息。
  *      - 用户界面显示为漂亮的礼物卡片。
  *      - 消息数据中包含完整的文本信息。
@@ -2905,14 +2819,14 @@ async function sendGiftNotificationToChar(targetChatId, products, cartItems, tot
 
     const itemsSummary = products.map((p, i) => `${p.name} x${cartItems[i].quantity}`).join("、");
 
-    // 1. 【核心】先准备好这条消息的“文本内容”
+    // 1. 先准备好这条消息的“文本内容”
     const messageTextContent = `我给你买了新礼物，希望你喜欢！\n商品清单：${itemsSummary}\n合计：¥${totalPrice.toFixed(2)}`;
 
     // 2. 创建对用户【可见】的消息对象。现在它同时拥有 “文本内容” 和 “卡片样式指令”
     const visibleMessage = {
         role: "user",
 
-        // 【核心修改】为这条消息添加一个 content 属性，这就是它的“文本本体”
+        // 为这条消息添加一个 content 属性，这就是它的“文本本体”
         // 当你复制这条消息时，复制出来的内容就是这个。
         content: messageTextContent,
 
@@ -2928,7 +2842,7 @@ async function sendGiftNotificationToChar(targetChatId, products, cartItems, tot
     };
     chat.history.push(visibleMessage);
 
-    // 3. 【这部分不变】创建一条给AI看的【隐藏】指令，确保AI能理解并回应
+    // 3. 创建一条给AI看的【隐藏】指令，确保AI能理解并回应
     const hiddenMessage = {
         role: "system",
         content: `[系统指令：用户刚刚为你购买了${cartItems.length}件商品，总价值为${totalPrice.toFixed(2)}元。商品包括：${itemsSummary}。请根据你的人设对此表示感谢或作出其他反应。]`,
@@ -2937,21 +2851,18 @@ async function sendGiftNotificationToChar(targetChatId, products, cartItems, tot
     };
     chat.history.push(hiddenMessage);
 
-    // 4. 【这部分不变】未读消息只增加1条
+    // 4. 未读消息只增加1条
     chat.unreadCount = (chat.unreadCount || 0) + 1;
     await db.chats.put(chat);
 
-    // 5. 【这部分不变】发送横幅通知
+    // 5. 发送横幅通知
     if (state.activeChatId !== targetChatId) {
         showNotification(targetChatId, "你收到了一份礼物！");
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
-
-// ▼▼▼ 【全新】购物车代付功能核心函数 ▼▼▼
 
 /**
- * 【全新总入口 | 无隐藏消息版】处理用户点击“分享给Ta代付”按钮的逻辑
+ * 处理用户点击“分享给Ta代付”按钮的逻辑
  */
 async function handleShareCartRequest() {
     const cartItems = await db.taobaoCart.toArray();
@@ -2986,8 +2897,6 @@ async function handleShareCartRequest() {
 
     if (!confirmed) return;
 
-    // --- ▼▼▼【核心修改】在这里，我们只创建一条消息 ▼▼▼ ---
-
     // 1. 直接将所有信息都放入 content 字段，让用户也能看到
     const requestContent = `[购物车代付请求]
 总金额: ¥${totalPrice.toFixed(2)}
@@ -3011,8 +2920,6 @@ async function handleShareCartRequest() {
 
     // 3. 将这条【单一的】消息添加到历史记录
     chat.history.push(requestMessage);
-
-    // --- ▲▲▲ 修改结束 ▲▲▲ ---
 
     await db.chats.put(chat);
 
@@ -3122,21 +3029,17 @@ async function createOrdersFromCart(cartItems) {
     }, 1000 * 10);
 }
 
-// ▲▲▲ 新功能函数结束 ▲▲▲
-
 /* --- “桃宝”App 功能函数结束 --- */
 function initTaobao() {
-    // ▼▼▼ 把这一整块全新的事件监听器代码，粘贴到 init() 的事件监听器区域末尾 ▼▼▼
 
-    /* --- 【全新】“桃宝”App 事件监听器 --- */
+    /* --- “桃宝”App 事件监听器 --- */
 
     // 1. 绑定主屏幕的App图标
     document.getElementById("taobao-app-icon").addEventListener("click", openTaobaoApp);
     // 绑定新加的“清空”按钮
     document.getElementById("clear-taobao-products-btn").addEventListener("click", clearTaobaoProducts);
-    // ▼▼▼ 在 init() 的事件监听区域末尾，粘贴下面这整块新代码 ▼▼▼
 
-    /* --- 【全新】桃宝购物车功能事件监听器 --- */
+    /* --- 桃宝购物车功能事件监听器 --- */
 
     // 1. 绑定App内部的页签切换
     document.querySelector(".taobao-tabs").addEventListener("click", (e) => {
@@ -3168,7 +3071,7 @@ function initTaobao() {
             }
         }
 
-        // --- 饿了么页 (★★★★★ 核心修复在这里 ★★★★★) ---
+        // --- 饿了么页  ---
         else if (target.closest("#eleme-view")) {
             // 处理顶部的几个功能按钮
             if (target.closest("#eleme-search-btn")) {
@@ -3178,7 +3081,7 @@ function initTaobao() {
             } else if (target.closest("#eleme-generate-ai-btn")) {
                 handleGenerateFoodsAI();
             }
-            // 【关键修复】处理美食卡片的点击
+            // 处理美食卡片的点击
             else {
                 const foodCard = target.closest(".product-card");
                 if (foodCard) {
@@ -3274,11 +3177,11 @@ function initTaobao() {
     });
     document.getElementById("confirm-link-paste-btn").addEventListener("click", handleAddFromLink);
 
-    // ▼▼▼ 在 init() 的事件监听器区域，用这块【新代码】替换旧的 'products-view' 点击事件 ▼▼▼
+
     document.getElementById("products-view").addEventListener("click", async (e) => {
         const target = e.target;
 
-        // 【核心修改】我们把原来的购买逻辑，改成了打开详情页的逻辑
+        // 把原来的购买逻辑，改成了打开详情页的逻辑
         const productCard = target.closest(".product-card");
         if (productCard && !target.classList.contains("add-cart-btn")) {
             const productId = parseInt(productCard.dataset.productId);
@@ -3303,8 +3206,8 @@ function initTaobao() {
             return;
         }
     });
-    // ▲▲▲ 替换结束 ▲▲▲
-    // ▼▼▼ 饿了么功能的核心事件监听器 ▼▼▼
+
+    // 饿了么功能的核心事件监听器
     document.getElementById("eleme-view").addEventListener("click", async (e) => {
         // AI生成按钮
         if (e.target.closest("#eleme-generate-ai-btn")) {
@@ -3331,13 +3234,12 @@ function initTaobao() {
             }
         }
     });
-    // ▲▲▲ 饿了么事件监听结束 ▲▲▲
+
     // 绑定饿了么的“清空”按钮
     document.getElementById("eleme-clear-all-btn").addEventListener("click", clearElemeFoods);
 
-    // ▼▼▼ 把这一整块全新的事件监听器代码，粘贴到 init() 的事件监听器区域末尾 ▼▼▼
 
-    /* --- 【全新】“桃宝”App 搜索与AI结果弹窗事件监听器 --- */
+    /* --- “桃宝”App 搜索与AI结果弹窗事件监听器 --- */
 
     // 1. 绑定搜索按钮
     productSearchBtn.addEventListener("click", handleSearchProductsAI);
@@ -3354,15 +3256,12 @@ function initTaobao() {
         await renderTaobaoProducts();
     });
 
-    // taobao.js -> initTaobao() 函数内
-
     // 3. 使用事件委托，处理结果弹窗内所有“添加”按钮的点击
     document.getElementById("ai-product-results-grid").addEventListener("click", async (e) => {
         if (e.target.classList.contains("add-to-my-page-btn")) {
             const button = e.target;
             const productData = JSON.parse(button.dataset.product);
 
-            // ★★★★★ 这就是我们这次唯一的、核心的修改！ ★★★★★
             // 1. 检查AI返回的商品数据里是否已经成功生成了图片URL
             if (!productData.imageUrl) {
                 // 2. 如果【没有】图片URL（即生图失败了），
@@ -3392,9 +3291,7 @@ function initTaobao() {
         }
     });
 
-    // ▼▼▼ 在 init() 的事件监听器区域末尾，粘贴下面这整块新代码 ▼▼▼
-
-    /* --- 【全新】桃宝订单物流功能事件监听器 --- */
+    /* --- 桃宝订单物流功能事件监听器 --- */
 
     // 1. 使用事件委托，为“我的订单”列表中的所有订单项绑定点击事件
     document.getElementById("orders-view").addEventListener("click", (e) => {
@@ -3416,12 +3313,11 @@ function initTaobao() {
 
     /* --- 事件监听结束 --- */
 
-    // ▲▲▲ 新增代码粘贴结束 ▲▲▲
+
     document.getElementById("share-cart-to-char-btn").addEventListener("click", handleShareCartRequest);
-    // ▼▼▼ 在 init() 的事件监听器区域粘贴 ▼▼▼
+
     document.getElementById("buy-for-char-btn").addEventListener("click", handleBuyForChar);
-    // ▲▲▲ 粘贴结束 ▲▲▲
-    /* --- “桃宝”App 事件监听器结束 --- */
+
 }
 
 document.addEventListener('DOMContentLoaded', initTaobao);

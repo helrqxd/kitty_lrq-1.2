@@ -1,13 +1,11 @@
 // studio.js
 
 document.addEventListener('DOMContentLoaded', () => {
-
     // ===================================================================
     // 1. 全局变量
     // ===================================================================
     let activeStudioScriptId = null; // 记录当前正在编辑或查看的剧本ID
     let activeStudioPlay = null; // 记录当前正在进行的演绎会话 { script, userRole, aiRole, aiChatId, history }
-
 
     // ===================================================================
     // 2. DOM 元素获取 (为提高性能，一次性获取)
@@ -34,7 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryModal = document.getElementById('studio-summary-modal');
     const novelModal = document.getElementById('studio-novel-share-modal');
     const aiGenerateScriptBtn = document.getElementById('ai-generate-script-btn');
-
+    const importScriptBtn = document.getElementById('import-studio-script-btn');
+    const importInput = document.getElementById('studio-import-input');
+    const exportScriptBtn = document.getElementById('export-studio-script-btn');
     // ===================================================================
     // 3. 核心功能函数
     // ===================================================================
@@ -53,16 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderStudioScriptList() {
         if (!scriptListEl) return;
         const scripts = await db.studioScripts.toArray();
-        scriptListEl.innerHTML = "";
+        scriptListEl.innerHTML = '';
 
         if (scripts.length === 0) {
-            scriptListEl.innerHTML = '<p style="text-align:center; color: var(--text-secondary); padding: 50px 0;">还没有剧本，点击右上角创建一个吧！</p>';
+            scriptListEl.innerHTML =
+                '<p style="text-align:center; color: var(--text-secondary); padding: 50px 0;">还没有剧本，点击右上角创建一个吧！</p>';
             return;
         }
 
         scripts.forEach(script => {
-            const item = document.createElement("div");
-            item.className = "studio-script-item";
+            const item = document.createElement('div');
+            item.className = 'studio-script-item';
             item.innerHTML = `
                 <div class="title">${script.name || '未命名剧本'}</div>
                 <div class="goal">🎯 ${script.storyGoal || '暂无目标'}</div>
@@ -85,32 +86,38 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openStudioEditor(scriptId = null) {
         activeStudioScriptId = scriptId;
         const deleteBtn = document.getElementById('delete-studio-script-btn');
-        const openingRemarkInput = document.getElementById('studio-opening-remark-input'); // 获取开场白输入框
+
+        const exportBtn = document.getElementById('export-studio-script-btn');
+        const openingRemarkInput = document.getElementById('studio-opening-remark-input');
 
         if (scriptId) {
-            editorTitle.textContent = "编辑剧本";
+            editorTitle.textContent = '编辑剧本';
             const script = await db.studioScripts.get(scriptId);
             nameInput.value = script.name || '';
             bgInput.value = script.storyBackground || '';
             goalInput.value = script.storyGoal || '';
-            openingRemarkInput.value = script.openingRemark || ''; // 加载开场白
+            openingRemarkInput.value = script.openingRemark || '';
             char1Input.value = script.character1_identity || '';
             char2Input.value = script.character2_identity || '';
             deleteBtn.style.display = 'block';
+
+            if (exportBtn) exportBtn.style.display = 'block';
         } else {
-            editorTitle.textContent = "新增剧本";
-            [nameInput, bgInput, goalInput, openingRemarkInput, char1Input, char2Input].forEach(input => input.value = ''); // 清空所有输入框
+            editorTitle.textContent = '新增剧本';
+            [nameInput, bgInput, goalInput, openingRemarkInput, char1Input, char2Input].forEach(input => (input.value = ''));
             deleteBtn.style.display = 'none';
+
+            if (exportBtn) exportBtn.style.display = 'none';
         }
 
         showScreen('studio-editor-screen');
     }
 
     /**
-     * [全新] 使用AI辅助生成或补完剧本内容
+     * 使用AI辅助生成或补完剧本内容
      */
     async function generateScriptWithAI() {
-        await showCustomAlert("请稍候", "AI剧本娘正在奋笔疾书中...");
+        await showCustomAlert('请稍候', 'AI剧本娘正在奋笔疾书中...');
 
         // 1. 收集所有已填写的信息
         const existingData = {
@@ -119,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             goal: document.getElementById('studio-goal-input').value.trim(),
             openingRemark: document.getElementById('studio-opening-remark-input').value.trim(),
             char1: document.getElementById('studio-char1-identity-input').value.trim(),
-            char2: document.getElementById('studio-char2-identity-input').value.trim()
+            char2: document.getElementById('studio-char2-identity-input').value.trim(),
         };
 
         // 2. 构建给AI的详细指令 (Prompt)
@@ -163,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const responseText = await getApiResponse(systemPrompt);
 
             // 3. 解析AI返回的JSON数据
-            const sanitizedText = responseText.replace(/^```json\s*|```$/g, "").trim();
+            const sanitizedText = responseText.replace(/^```json\s*|```$/g, '').trim();
             const parsedData = JSON.parse(sanitizedText);
 
             // 4. 将生成的内容填充回输入框 (只填充原本为空的)
@@ -186,12 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('studio-char2-identity-input').value = parsedData.char2;
             }
 
-            await showCustomAlert("完成！", "剧本已由AI填充完毕！");
-
+            await showCustomAlert('完成！', '剧本已由AI填充完毕！');
         } catch (error) {
-            console.error("AI生成剧本失败:", error);
-            await showCustomAlert("生成失败", `发生错误: ${error.message}\n\nAI返回的原始数据可能不是有效的JSON格式，请在控制台查看详情。`);
-            console.error("AI原始返回内容:", error.rawResponse || "无"); // 假设错误对象可能包含原始响应
+            console.error('AI生成剧本失败:', error);
+            await showCustomAlert(
+                '生成失败',
+                `发生错误: ${error.message}\n\nAI返回的原始数据可能不是有效的JSON格式，请在控制台查看详情。`,
+            );
+            console.error('AI原始返回内容:', error.rawResponse || '无'); // 假设错误对象可能包含原始响应
         }
     }
 
@@ -205,10 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
             storyGoal: goalInput.value.trim(),
             openingRemark: document.getElementById('studio-opening-remark-input').value.trim(), // 新增
             character1_identity: char1Input.value.trim(),
-            character2_identity: char2Input.value.trim()
+            character2_identity: char2Input.value.trim(),
         };
 
-        if (!scriptData.name || !scriptData.storyBackground || !scriptData.storyGoal || !scriptData.character1_identity || !scriptData.character2_identity) {
+        if (
+            !scriptData.name ||
+            !scriptData.storyBackground ||
+            !scriptData.storyGoal ||
+            !scriptData.character1_identity ||
+            !scriptData.character2_identity
+        ) {
             alert('除了开场白，所有字段均为必填项哦！');
             return;
         }
@@ -221,6 +236,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
         alert('剧本已保存！');
         showStudioScreen();
+    }
+    /**
+     * 导出当前正在编辑的剧本
+     */
+    async function exportCurrentScript() {
+        if (!activeStudioScriptId) {
+            alert('请先保存剧本后再导出！');
+            return;
+        }
+
+        const script = await db.studioScripts.get(activeStudioScriptId);
+        if (!script) {
+            alert('找不到剧本数据。');
+            return;
+        }
+
+        // 1. 准备数据
+        const exportData = {
+            type: 'EPhone_Studio_Script', // 标记文件类型
+            version: 1,
+            data: script,
+        };
+
+        // 2. 创建文件并下载
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        // 文件名: [剧本]剧本名.json
+        link.download = `[剧本]${script.name}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // await showCustomAlert("导出成功", "剧本已开始下载！"); // 如果你有这个全局函数可以使用，没有就用 alert
+        alert('剧本导出成功！');
+    }
+
+    /**
+     * 导入剧本文件
+     */
+    function handleScriptImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async e => {
+            try {
+                const text = e.target.result;
+                const json = JSON.parse(text);
+
+                // 简单的格式验证
+                if (json.type !== 'EPhone_Studio_Script' || !json.data) {
+                    // 尝试兼容纯对象格式（如果用户手动复制了内容）
+                    if (!json.name || !json.storyBackground) {
+                        throw new Error('文件格式不正确，缺少必要字段。');
+                    }
+                    // 如果是纯对象，就直接用
+                    json.data = json;
+                }
+
+                const scriptData = json.data;
+
+                // 生成一个新的ID，防止ID冲突
+                scriptData.id = Date.now();
+                // 如果名字重复，加个(导入)后缀
+                scriptData.name = scriptData.name + ' (导入)';
+
+                await db.studioScripts.add(scriptData);
+
+                await renderStudioScriptList();
+                alert(`剧本《${scriptData.name}》导入成功！`);
+            } catch (error) {
+                console.error('导入失败:', error);
+                alert(`导入失败: ${error.message}`);
+            } finally {
+                // 清空 input，允许重复导入同一个文件
+                event.target.value = '';
+            }
+        };
+        reader.readAsText(file);
     }
 
     /**
@@ -252,10 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. 填充下拉框选项（现在是身份列表）
         const characters = Object.values(window.state.chats).filter(chat => !chat.isGroup);
         let optionsHtml = `<option value="user" data-persona="${escape(userPersona)}">${userNickname}</option>`;
-        optionsHtml += characters.map(char => {
-            const persona = char.settings.aiPersona || '';
-            return `<option value="${char.id}" data-persona="${escape(persona)}">${char.name}</option>`;
-        }).join('');
+        optionsHtml += characters
+            .map(char => {
+                const persona = char.settings.aiPersona || '';
+                return `<option value="${char.id}" data-persona="${escape(persona)}">${char.name}</option>`;
+            })
+            .join('');
 
         role1IdentitySelect.innerHTML = optionsHtml;
         role2IdentitySelect.innerHTML = optionsHtml;
@@ -272,13 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. 设置默认的【扮演者】分配
         const radiosRole1 = document.querySelectorAll('input[name="player-role1"]');
         const radiosRole2 = document.querySelectorAll('input[name="player-role2"]');
-        radiosRole1.forEach(r => { if (r.value === 'user') r.checked = true; }); // 人物1默认由你扮演
-        radiosRole2.forEach(r => { if (r.value === 'ai') r.checked = true; });   // 人物2默认由AI扮演
+        radiosRole1.forEach(r => {
+            if (r.value === 'user') r.checked = true;
+        }); // 人物1默认由你扮演
+        radiosRole2.forEach(r => {
+            if (r.value === 'ai') r.checked = true;
+        }); // 人物2默认由AI扮演
 
         // 5. 绑定单选框的联动事件
         const playerSelectionGroups = document.querySelectorAll('.player-selection-group');
         playerSelectionGroups.forEach((group, index) => {
-            group.addEventListener('change', (e) => {
+            group.addEventListener('change', e => {
                 const selectedPlayer = e.target.value;
                 const otherIndex = index === 0 ? 1 : 0; // 找到另一个角色组
                 const otherGroupRadios = playerSelectionGroups[otherIndex].querySelectorAll('input[type="radio"]');
@@ -288,7 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     otherGroupRadios.forEach(radio => {
                         if (radio.value === 'ai') radio.checked = true;
                     });
-                } else { // selectedPlayer === 'ai'
+                } else {
+                    // selectedPlayer === 'ai'
                     // 如果当前角色选了“AI扮演”，另一个角色必须是“我扮演”
                     otherGroupRadios.forEach(radio => {
                         if (radio.value === 'user') radio.checked = true;
@@ -334,13 +438,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const aiRoleNumber = role1Player === 'ai' ? 1 : 2;
 
         const aiIdentityValue = aiRoleNumber === 1 ? role1IdentityValue : role2IdentityValue;
-        const aiChatId = aiIdentityValue !== 'user' ? aiIdentityValue : (userRoleNumber === 1 ? role2IdentityValue : role1IdentityValue);
+        const aiChatId =
+            aiIdentityValue !== 'user' ? aiIdentityValue : userRoleNumber === 1 ? role2IdentityValue : role1IdentityValue;
 
-        // ★★★ 核心新增：获取名字 ★★★
         const userNickname = window.state.qzoneSettings.nickname || '我';
 
         // 辅助函数：根据下拉框的值获取名字
-        const getNameFromIdentityValue = (val) => {
+        const getNameFromIdentityValue = val => {
             if (val === 'user') return userNickname;
             if (window.state.chats[val]) return window.state.chats[val].name;
             return '未知角色';
@@ -348,7 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const role1Name = getNameFromIdentityValue(role1IdentityValue);
         const role2Name = getNameFromIdentityValue(role2IdentityValue);
-        // ★★★ 新增结束 ★★★
 
         // 4. 初始化演绎会话
         activeStudioPlay = {
@@ -359,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 存储身份
             aiIdentity: aiRoleNumber === 1 ? script.character1_identity : script.character2_identity,
             userPersona: userRoleNumber === 1 ? script.character1_identity : script.character2_identity,
-            // ★★★ 核心新增：存储名字，供小说生成使用 ★★★
+            // 存储名字，供小说生成使用
             role1Name: role1Name,
             role2Name: role2Name,
             history: [],
@@ -367,14 +470,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const backgroundMessage = {
             role: 'system',
-            content: `【故事背景】\n${script.storyBackground}`
+            content: `【故事背景】\n${script.storyBackground}`,
         };
         activeStudioPlay.history.push(backgroundMessage);
 
         if (script.openingRemark) {
             const openingMessage = {
                 role: 'system',
-                content: `【开场白】\n${script.openingRemark}`
+                content: `【开场白】\n${script.openingRemark}`,
             };
             activeStudioPlay.history.push(openingMessage);
         }
@@ -406,18 +509,21 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {object} msg - 消息对象
      */
     function createPlayMessageElement(msg) {
-        const wrapper = document.createElement("div");
+        const wrapper = document.createElement('div');
 
-        // ★★★ 核心修复：在这里判断角色并使用正确的class名 ★★★
+        // 判断角色并使用正确的class名
         const roleClass = msg.role === 'assistant' ? 'ai' : msg.role;
 
         if (msg.role === 'system') {
             wrapper.className = 'message-wrapper studio-system';
-            wrapper.innerHTML = `<div class="message-bubble studio-system-bubble">${msg.content.replace(/\n/g, '<br>')}</div>`;
+            wrapper.innerHTML = `<div class="message-bubble studio-system-bubble">${msg.content.replace(
+                /\n/g,
+                '<br>',
+            )}</div>`;
         } else {
-            // ★★★ 使用我们新定义的 roleClass，它会将 'assistant' 转换为 'ai' ★★★
+            // 使用新定义的 roleClass，它会将 'assistant' 转换为 'ai'
             wrapper.className = `message-wrapper ${roleClass}`;
-            const bubble = document.createElement("div");
+            const bubble = document.createElement('div');
             bubble.className = `message-bubble ${roleClass}`;
 
             const chat = window.state.chats[activeStudioPlay.aiChatId];
@@ -426,17 +532,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // 根据角色获取正确的头像
             if (msg.role === 'user') {
                 const userNickname = window.state.qzoneSettings.weiboNickname || '我';
-                const userIdentityValue = activeStudioPlay.userRole === 1 ? document.getElementById('studio-role1-identity-select').value : document.getElementById('studio-role2-identity-select').value;
+                const userIdentityValue =
+                    activeStudioPlay.userRole === 1
+                        ? document.getElementById('studio-role1-identity-select').value
+                        : document.getElementById('studio-role2-identity-select').value;
                 if (userIdentityValue !== 'user' && window.state.chats[userIdentityValue]) {
                     avatarSrc = window.state.chats[userIdentityValue].settings.aiAvatar;
                 } else {
                     avatarSrc = window.state.qzoneSettings.avatar || avatarSrc;
                 }
-            } else { // assistant
+            } else {
+                // assistant
                 avatarSrc = chat?.settings?.aiAvatar || avatarSrc;
             }
 
-            bubble.innerHTML = `<img src="${avatarSrc}" class="avatar"><div class="content">${msg.content.replace(/\n/g, '<br>')}</div>`;
+            bubble.innerHTML = `<img src="${avatarSrc}" class="avatar"><div class="content">${msg.content.replace(
+                /\n/g,
+                '<br>',
+            )}</div>`;
             wrapper.appendChild(bubble);
         }
 
@@ -444,11 +557,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * [全新] 处理用户点击“刷新”按钮，重新生成AI的上一轮回应
+     * 处理用户点击“刷新”按钮，重新生成AI的上一轮回应
      */
     async function handleRerollPlay() {
         if (!activeStudioPlay || activeStudioPlay.history.length < 2) {
-            alert("还没有足够的内容来刷新哦。");
+            alert('还没有足够的内容来刷新哦。');
             return;
         }
 
@@ -500,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * 触发AI在演绎中的回应
      */
     async function triggerAiStudioResponse() {
-        // ★★★ 核心修改：解构出名字变量 ★★★
+        // 解构出名字变量
         const { script, aiRole, aiChatId, history, aiIdentity, userPersona, role1Name, role2Name } = activeStudioPlay;
         const chat = window.state.chats[aiChatId];
 
@@ -513,7 +626,6 @@ document.addEventListener('DOMContentLoaded', () => {
         playMessagesEl.appendChild(actionTypingIndicator);
         playMessagesEl.scrollTop = playMessagesEl.scrollHeight;
 
-        // ★★★ 核心修改：Prompt中加入名字 ★★★
         const systemPrompt = `
     你正在进行一场名为《${script.name}》的戏剧角色扮演。
 
@@ -552,17 +664,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const { proxyUrl, apiKey, model } = window.state.apiConfig;
-            const isGemini = proxyUrl === "https://generativelanguage.googleapis.com/v1beta/models";
+            const isGemini = proxyUrl === 'https://generativelanguage.googleapis.com/v1beta/models';
 
             const requestData = isGemini
                 ? window.toGeminiRequestData(model, apiKey, systemPrompt, messagesForApi, true)
                 : {
                     url: `${proxyUrl}/v1/chat/completions`,
                     data: {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-                        body: JSON.stringify({ model, messages: [{ role: "system", content: systemPrompt }, ...messagesForApi] })
-                    }
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+                        body: JSON.stringify({ model, messages: [{ role: 'system', content: systemPrompt }, ...messagesForApi] }),
+                    },
                 };
 
             const response = await fetch(requestData.url, requestData.data);
@@ -578,9 +690,8 @@ document.addEventListener('DOMContentLoaded', () => {
             actionTypingIndicator.remove(); // 移除行动提示
 
             await triggerNarration();
-
         } catch (error) {
-            console.error("小剧场AI回应失败:", error);
+            console.error('小剧场AI回应失败:', error);
             const errorMessage = { role: 'assistant', content: `[AI出错了: ${error.message}]` };
             playMessagesEl.appendChild(createPlayMessageElement(errorMessage));
         } finally {
@@ -603,9 +714,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * 根据演绎历史生成一篇小说
      */
     async function generateNovelFromPlay() {
-        await showCustomAlert("请稍候", "正在将你们的演绎过程创作成小说...");
+        await showCustomAlert('请稍候', '正在将你们的演绎过程创作成小说...');
 
-        // ★★★ 核心修改：解构出名字 ★★★
+        // 解构出名字
         const { script, history, userRole, aiChatId, role1Name, role2Name } = activeStudioPlay;
         const chat = window.state.chats[aiChatId];
 
@@ -621,13 +732,16 @@ document.addEventListener('DOMContentLoaded', () => {
     - 故事目标: ${script.storyGoal}
 
     # 对话历史
-    ${history.map(h => {
-            // 这里稍微处理一下role显示，让AI更容易分辨
-            let roleName = h.role === 'user' ? (userRole === 1 ? role1Name : role2Name) : (userRole === 1 ? role2Name : role1Name);
-            // 如果是system旁白
-            if (h.role === 'system') return `【旁白/系统】: ${h.content}`;
-            return `${roleName}: ${h.content}`;
-        }).join('\n')}
+    ${history
+                .map(h => {
+                    // 这里稍微处理一下role显示，让AI更容易分辨
+                    let roleName =
+                        h.role === 'user' ? (userRole === 1 ? role1Name : role2Name) : userRole === 1 ? role2Name : role1Name;
+                    // 如果是system旁白
+                    if (h.role === 'system') return `【旁白/系统】: ${h.content}`;
+                    return `${roleName}: ${h.content}`;
+                })
+                .join('\n')}
 
     # 写作要求
     1. 使用第三人称叙事。
@@ -640,16 +754,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const { proxyUrl, apiKey, model } = window.state.apiConfig;
-            const isGemini = proxyUrl === "https://generativelanguage.googleapis.com/v1beta/models";
+            const isGemini = proxyUrl === 'https://generativelanguage.googleapis.com/v1beta/models';
             const requestData = isGemini
                 ? window.toGeminiRequestData(model, apiKey, systemPrompt, [{ role: 'user', content: '请开始创作' }], true)
                 : {
                     url: `${proxyUrl}/v1/chat/completions`,
                     data: {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-                        body: JSON.stringify({ model, messages: [{ role: "user", content: systemPrompt }], temperature: 0.7 })
-                    }
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+                        body: JSON.stringify({ model, messages: [{ role: 'user', content: systemPrompt }], temperature: 0.7 }),
+                    },
                 };
 
             const response = await fetch(requestData.url, requestData.data);
@@ -667,8 +781,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 timestamp: Date.now(),
                 participants: {
                     role1: role1Name, // 使用真实名字
-                    role2: role2Name  // 使用真实名字
-                }
+                    role2: role2Name, // 使用真实名字
+                },
             };
             await db.studioHistory.add(historyRecord);
             console.log('故事记录已成功保存到数据库！');
@@ -676,10 +790,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('studio-novel-content').textContent = novelText;
             novelModal.classList.add('visible');
             summaryModal.classList.remove('visible');
-
         } catch (error) {
-            console.error("生成小说失败:", error);
-            await showCustomAlert("生成失败", `发生错误: ${error.message}`);
+            console.error('生成小说失败:', error);
+            await showCustomAlert('生成失败', `发生错误: ${error.message}`);
         }
     }
 
@@ -693,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { aiChatId } = activeStudioPlay;
         const chat = window.state.chats[aiChatId];
 
-        const confirmed = await showCustomConfirm("确认分享", `确定要将这篇小说分享给“${chat.name}”吗？`);
+        const confirmed = await showCustomConfirm('确认分享', `确定要将这篇小说分享给“${chat.name}”吗？`);
 
         if (confirmed) {
             const shareMessage = {
@@ -703,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 description: '点击查看我们共同创作的故事！',
                 source_name: '小剧场',
                 content: novelText,
-                timestamp: Date.now()
+                timestamp: Date.now(),
             };
 
             chat.history.push(shareMessage);
@@ -715,7 +828,6 @@ document.addEventListener('DOMContentLoaded', () => {
             openChat(aiChatId);
         }
     }
-
 
     // ===================================================================
     // 4. 事件监听器
@@ -763,7 +875,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (exitPlayBtn) {
         exitPlayBtn.addEventListener('click', async () => {
-            const confirmed = await showCustomConfirm("确认退出", "确定要中途退出这次演绎吗？", { confirmButtonClass: "btn-danger" });
+            const confirmed = await showCustomConfirm('确认退出', '确定要中途退出这次演绎吗？', {
+                confirmButtonClass: 'btn-danger',
+            });
             if (confirmed) {
                 endStudioPlay(false);
             }
@@ -776,7 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sendPlayActionBtn) {
         sendPlayActionBtn.addEventListener('click', handleUserPlayAction);
-        playInput.addEventListener('keypress', (e) => {
+        playInput.addEventListener('keypress', e => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleUserPlayAction();
@@ -800,6 +914,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+    // 1. 导入按钮点击 -> 触发文件选择
+    if (importScriptBtn) {
+        importScriptBtn.addEventListener('click', () => {
+            importInput.click();
+        });
+    }
+
+    // 2. 文件选择改变 -> 执行导入逻辑
+    if (importInput) {
+        importInput.addEventListener('change', handleScriptImport);
+    }
+
+    // 3. 导出按钮点击
+    if (exportScriptBtn) {
+        exportScriptBtn.addEventListener('click', exportCurrentScript);
+    }
+
+
     /**
      * 打开故事记录屏幕
      */
@@ -817,21 +950,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 按时间倒序获取所有记录
         const records = await db.studioHistory.orderBy('timestamp').reverse().toArray();
-        listEl.innerHTML = "";
+        listEl.innerHTML = '';
 
         if (records.length === 0) {
-            listEl.innerHTML = '<p style="text-align:center; color: var(--text-secondary); padding: 50px 0;">还没有完成过任何故事哦。</p>';
+            listEl.innerHTML =
+                '<p style="text-align:center; color: var(--text-secondary); padding: 50px 0;">还没有完成过任何故事哦。</p>';
             return;
         }
 
         records.forEach(record => {
-            const item = document.createElement("div");
-            item.className = "studio-script-item"; // 复用剧本列表的样式
+            const item = document.createElement('div');
+            item.className = 'studio-script-item'; // 复用剧本列表的样式
             const recordDate = new Date(record.timestamp);
 
             item.innerHTML = `
                 <div class="title">${record.scriptName}</div>
-                <div class="goal" style="margin-top: 5px;">🎭 参与者: ${record.participants.role1}, ${record.participants.role2}</div>
+                <div class="goal" style="margin-top: 5px;">🎭 参与者: ${record.participants.role1}, ${record.participants.role2
+                }</div>
                 <div class="goal" style="font-size: 12px; margin-top: 8px;">记录于: ${recordDate.toLocaleString()}</div>
             `;
 
@@ -839,7 +974,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 添加长按删除
             addLongPressListener(item, async () => {
-                const confirmed = await showCustomConfirm("删除记录", "确定要删除这条故事记录吗？此操作不可撤销。", { confirmButtonClass: "btn-danger" });
+                const confirmed = await showCustomConfirm('删除记录', '确定要删除这条故事记录吗？此操作不可撤销。', {
+                    confirmButtonClass: 'btn-danger',
+                });
                 if (confirmed) {
                     await deleteStudioHistory(record.id);
                 }
@@ -855,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function viewStudioHistoryDetail(recordId) {
         const record = await db.studioHistory.get(recordId);
         if (!record) {
-            alert("找不到该条记录！");
+            alert('找不到该条记录！');
             return;
         }
 
@@ -889,9 +1026,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!activeStudioScriptId) return;
 
             const script = await db.studioScripts.get(activeStudioScriptId);
-            const scriptName = script ? script.name : "此剧本";
+            const scriptName = script ? script.name : '此剧本';
 
-            const confirmed = await showCustomConfirm("确认删除", `确定要永久删除剧本《${scriptName}》吗？此操作不可恢复。`, { confirmButtonClass: "btn-danger" });
+            const confirmed = await showCustomConfirm('确认删除', `确定要永久删除剧本《${scriptName}》吗？此操作不可恢复。`, {
+                confirmButtonClass: 'btn-danger',
+            });
 
             if (confirmed) {
                 await db.studioScripts.delete(activeStudioScriptId);
@@ -903,30 +1042,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * [新] 创建一个通用的“正在输入”提示元素 (已添加专属class)
+     * 创建一个通用的“正在输入”提示元素 (已添加专属class)
      * @param {string} text - 要显示的提示文本
      * @returns {HTMLElement}
      */
     function createTypingIndicator(text) {
-        const indicator = document.createElement("div");
-        // ★★★ 核心修改：使用专属的 'studio-indicator' 类名，方便CSS精确定位 ★★★
-        indicator.className = "message-wrapper studio-indicator";
+        const indicator = document.createElement('div');
+        // 使用专属的 'studio-indicator' 类名，方便CSS精确定位
+        indicator.className = 'message-wrapper studio-indicator';
         // 同时，为了外观统一，我们让它使用和旁白一样的气泡样式
         indicator.innerHTML = `<div class="message-bubble studio-system-bubble" style="opacity: 0.8;">${text}</div>`;
         return indicator;
     }
 
     /**
-     * [新] 触发旁白生成 (已集成结局判定功能)
+     * 触发旁白生成 (已集成结局判定功能)
      */
     async function triggerNarration() {
         const { script, history } = activeStudioPlay;
 
-        const narrationTypingIndicator = createTypingIndicator("故事发展中...");
+        const narrationTypingIndicator = createTypingIndicator('故事发展中...');
         playMessagesEl.appendChild(narrationTypingIndicator);
         playMessagesEl.scrollTop = playMessagesEl.scrollHeight;
 
-        // ★★★ 核心修改：为旁白Prompt增加结局判定的最高优先级任务 ★★★
         const narrationPrompt = `
     # 你的任务
     你是一个掌控故事节奏的“地下城主”(DM)或“旁白”。你的主要任务是根据剧本设定和已发生的对话，推动情节发展。
@@ -985,9 +1123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeStudioPlay.history.push(narrationMessage);
                 playMessagesEl.appendChild(createPlayMessageElement(narrationMessage));
             }
-
         } catch (error) {
-            console.error("旁白生成失败:", error);
+            console.error('旁白生成失败:', error);
             const errorMessage = { role: 'system', content: `[旁白生成失败: ${error.message}]` };
             playMessagesEl.appendChild(createPlayMessageElement(errorMessage));
         } finally {
@@ -997,32 +1134,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * [新] 通用的AI API请求函数
+     * 通用的AI API请求函数
      * @param {string} systemPrompt - 发送给AI的系统指令
      * @returns {Promise<string>} AI返回的文本内容
      */
     async function getApiResponse(systemPrompt) {
         const { proxyUrl, apiKey, model } = window.state.apiConfig;
-        const isGemini = proxyUrl === "https://generativelanguage.googleapis.com/v1beta/models";
+        const isGemini = proxyUrl === 'https://generativelanguage.googleapis.com/v1beta/models';
 
         const temperature = parseFloat(window.state.apiConfig.temperature) || 0.8;
 
-        // ★★★ 核心修改：为OpenAI兼容的API请求体中增加一个 user 角色消息，构成合法对话 ★★★
+        // 为OpenAI兼容的API请求体中增加一个 user 角色消息，构成合法对话
         const messagesForApi = [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: "请开始你的表演。" } // Gemini API也需要一个用户消息，所以我们统一添加
-        ];
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: '请开始你的表演。' },];
 
         const requestData = isGemini
-            ? window.toGeminiRequestData(model, apiKey, systemPrompt, [{ role: 'user', content: '请开始你的表演。' }], true, temperature)
+            ? window.toGeminiRequestData(
+                model,
+                apiKey,
+                systemPrompt,
+                [{ role: 'user', content: '请开始你的表演。' }],
+                true,
+                temperature,
+            )
             : {
                 url: `${proxyUrl}/v1/chat/completions`,
                 data: {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-                    // ★★★ 使用我们新创建的、包含user角色的 messagesForApi 变量 ★★★
-                    body: JSON.stringify({ model, messages: messagesForApi, temperature })
-                }
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+                    // 使用新创建的、包含user角色的 messagesForApi 变量
+                    body: JSON.stringify({ model, messages: messagesForApi, temperature }),
+                },
             };
 
         const response = await fetch(requestData.url, requestData.data);
@@ -1033,10 +1176,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const result = await response.json();
         // 增加对返回结果的健壮性检查
-        const aiContent = isGemini ? result?.candidates?.[0]?.content?.parts?.[0]?.text : result?.choices?.[0]?.message?.content;
+        const aiContent = isGemini
+            ? result?.candidates?.[0]?.content?.parts?.[0]?.text
+            : result?.choices?.[0]?.message?.content;
 
         if (!aiContent) {
-            throw new Error("API返回了空内容，可能是因为触发了安全策略。");
+            throw new Error('API返回了空内容，可能是因为触发了安全策略。');
         }
 
         return aiContent.trim();

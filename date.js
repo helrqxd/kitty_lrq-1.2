@@ -616,7 +616,7 @@ let datingGameState = {
     isNsfwMode: false,
     completion: 0
 };
-// ▼▼▼ 在这里粘贴下面这一行新代码 ▼▼▼
+
 let currentDatingSummary = null; // 用于暂存当前结算卡片的数据
 
 /**
@@ -1941,7 +1941,6 @@ async function showDatingSummaryCard(finalStory = "") {
             ...currentDatingSummary, // 将卡片的所有信息都复制过来
             timestamp: Date.now(), // 加上一个保存时的时间戳
         };
-        // 使用 await 异步地将这条记录添加到我们的新数据库表中
         await db.datingHistory.add(historyRecord);
         console.log("约会结算卡片已保存到历史库:", historyRecord);
     } catch (error) {
@@ -1961,7 +1960,7 @@ async function shareDatingSummary() {
     const chat = state.chats[currentDatingSummary.characterId];
     if (!chat) return;
 
-    // 准备一个用于【编辑时】显示的、包含完整约会过程的详细文本
+
     const storyForEdit = [...currentDatingSummary.storyHistory, `【旁白】: ${currentDatingSummary.finalStory}`].join("\n");
     const contentForEditing = `
                         [约会记录]
